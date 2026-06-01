@@ -7,7 +7,7 @@ Para abordar la problemática de la inspección del patrimonio construido en sil
 ### 1. Clonar el repositorio
 
 ```bash
-git clone <URL_DEL_REPOSITORIO>
+git clone https://github.com/sharonconpan/SillarNet
 cd SillarNet
 ```
 

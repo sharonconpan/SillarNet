@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SillarNet — Inspección de Patrimonio</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f5f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      color: #2c3e50;
+      margin-bottom: 4px;
+    }
+    .subtitulo {
+      color: #7f8c8d;
+      font-size: 0.95rem;
+      margin-bottom: 30px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    .zona-upload {
+      border: 2px dashed #bdc3c7;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.3s;
+      margin-bottom: 20px;
+    }
+    .zona-upload:hover { border-color: #3498db; }
+    .zona-upload input { display: none; }
+    .zona-upload .icono { font-size: 3rem; margin-bottom: 10px; }
+    .zona-upload p { color: #7f8c8d; font-size: 0.95rem; }
+    #preview {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 10px;
+      display: none;
+      margin-bottom: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #34495e; }
+    button:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+    /* Resultado */
+    .resultado { display: none; }
+    .semaforo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      color: white;
+    }
+    .semaforo .circulo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+    }
+    .semaforo .info h2 { font-size: 1.3rem; margin-bottom: 4px; }
+    .semaforo .info p  { font-size: 0.9rem; opacity: 0.9; }
+    .confianza-barra {
+      background: #ecf0f1;
+      border-radius: 8px;
+      height: 10px;
+      margin: 8px 0 4px;
+      overflow: hidden;
+    }
+    .confianza-fill {
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.8s ease;
+    }
+    .recomendacion {
+      background: #f8f9fa;
+      border-left: 4px solid #3498db;
+      padding: 14px 16px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.95rem;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    .top5 h3 { font-size: 1rem; color: #2c3e50; margin-bottom: 12px; }
+    .top5-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 0.88rem;
+    }
+    .top5-item span:first-child {
+      width: 140px;
+      color: #555;
+      flex-shrink: 0;
+    }
+    .top5-barra-bg {
+      flex: 1;
+      background: #ecf0f1;
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .top5-barra { height: 100%; border-radius: 4px; }
+    .top5-pct { width: 40px; text-align: right; color: #555; }
+    .cargando {
+      text-align: center;
+      color: #7f8c8d;
+      padding: 20px;
+      display: none;
+    }
+    .spinner {
+      font-size: 2rem;
+      animation: girar 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes girar { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <h1>🏛️ SillarNet</h1>
+  <p class="subtitulo">Sistema de inspección de patrimonio construido en sillar — Arequipa</p>
+
+  <!-- Card de subida -->
+  <div class="card">
+    <label class="zona-upload" for="inputFoto">
+      <input type="file" id="inputFoto" accept="image/*">
+      <div class="icono">📷</div>
+      <p>Haz clic o arrastra una foto de la pared de sillar</p>
+      <p style="font-size:0.8rem; margin-top:6px;">JPG, PNG — máx. 10MB</p>
+    </label>
+
+    <img id="preview" alt="Vista previa">
+
+    <button id="btnAnalizar" disabled onclick="analizar()">
+      Analizar imagen
+    </button>
+  </div>
+
+  <!-- Cargando -->
+  <div class="cargando" id="cargando">
+    <div class="spinner">⚙️</div>
+    <p style="margin-top:10px;">Analizando imagen con SillarNet...</p>
+  </div>
+
+  <!-- Resultado -->
+  <div class="card resultado" id="resultado">
+
+    <div class="semaforo" id="semaforo">
+      <div class="circulo" id="semaforoIcono"></div>
+      <div class="info">
+        <h2 id="claseTexto"></h2>
+        <p id="urgenciaTexto"></p>
+        <div class="confianza-barra">
+          <div class="confianza-fill" id="confianzaFill"></div>
+        </div>
+        <p id="confianzaTexto" style="font-size:0.85rem;"></p>
+      </div>
+    </div>
+
+    <div class="recomendacion" id="recomendacion"></div>
+
+    <div class="top5">
+      <h3>📊 Probabilidades por clase</h3>
+      <div id="top5Container"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const ICONOS = {
+        'buen_estado':     '✅',
+        'suciedad_leve':   '🟡',
+        'suciedad_grave':  '🟠',
+        'deterioro_leve':  '🔴',
+        'deterioro_grave': '🚨'
+    };
+
+    const PRIORIDAD_LABEL = {
+        'buen_estado':     'Sin problemas estructurales ni estéticos',
+        'suciedad_leve':   'Sin deterioro estructural · Suciedad leve',
+        'suciedad_grave':  'Sin deterioro estructural · Suciedad grave',
+        'deterioro_leve':  '⚠️ DETERIORO ESTRUCTURAL LEVE — Prioridad alta',
+        'deterioro_grave': '🚨 DETERIORO ESTRUCTURAL GRAVE — Intervención urgente'
+    };
+
+    const NIVEL_ALERTA = {
+        'buen_estado':     'ninguno',
+        'suciedad_leve':   'secundario',
+        'suciedad_grave':  'secundario',
+        'deterioro_leve':  'PRIORITARIO',
+        'deterioro_grave': 'PRIORITARIO'
+    };
+
+    const COLORES_TOP5 = {
+      'buen_estado':     '#2ecc71',
+      'suciedad_leve':   '#f1c40f',
+      'suciedad_grave':  '#e67e22',
+      'deterioro_leve':  '#e74c3c',
+      'deterioro_grave': '#8e44ad'
+    };
+
+    let archivoSeleccionado = null;
+
+    document.getElementById('inputFoto').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      archivoSeleccionado = file;
+
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const preview = document.getElementById('preview');
+        preview.src = ev.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+
+      document.getElementById('btnAnalizar').disabled = false;
+      document.getElementById('resultado').style.display = 'none';
+    });
+
+    async function analizar() {
+      if (!archivoSeleccionado) return;
+
+      document.getElementById('btnAnalizar').disabled = true;
+      document.getElementById('cargando').style.display = 'block';
+      document.getElementById('resultado').style.display = 'none';
+
+      const formData = new FormData();
+      formData.append('file', archivoSeleccionado);
+
+      try {
+        const resp = await fetch('http://localhost:8000/analizar', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await resp.json();
+        mostrarResultado(data);
+      } catch (err) {
+        alert('Error conectando con el servidor. ¿Está corriendo el backend?');
+        console.error(err);
+      } finally {
+        document.getElementById('cargando').style.display = 'none';
+        document.getElementById('btnAnalizar').disabled = false;
+      }
+    }
+
+    function mostrarResultado(data) {
+      // Semáforo
+      document.getElementById('semaforo').style.background = data.color;
+      document.getElementById('semaforoIcono').textContent  = ICONOS[data.clase] || '❓';
+      document.getElementById('claseTexto').textContent     = data.clase.replace(/_/g, ' ').toUpperCase();
+      // document.getElementById('urgenciaTexto').textContent  = `Urgencia: ${data.urgencia}  |  ${data.necesita_mantenimiento ? 'Requiere intervención' : 'Sin intervención necesaria'}`;
+
+      const esDeterio = data.clase.startsWith('deterioro');
+        const nivelLabel = NIVEL_ALERTA[data.clase];
+        const prioridadMsg = PRIORIDAD_LABEL[data.clase];
+
+        document.getElementById('urgenciaTexto').innerHTML =
+            `<strong>${nivelLabel}</strong> · ${prioridadMsg}`;
+
+        // Borde extra si es deterioro
+        document.getElementById('semaforo').style.border =
+            esDeterio ? '3px solid white' : 'none';
+
+      // Barra de confianza
+      document.getElementById('confianzaFill').style.width      = data.confianza + '%';
+      document.getElementById('confianzaFill').style.background = 'rgba(255,255,255,0.7)';
+      document.getElementById('confianzaTexto').textContent      = `Confianza del modelo: ${data.confianza}%`;
+
+      // Recomendación
+      document.getElementById('recomendacion').textContent = '💡 ' + data.recomendacion;
+
+      // Top 5
+      const container = document.getElementById('top5Container');
+      container.innerHTML = '';
+      data.top5.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'top5-item';
+        div.innerHTML = `
+          <span>${item.clase.replace(/_/g, ' ')}</span>
+          <div class="top5-barra-bg">
+            <div class="top5-barra"
+                 style="width:${item.probabilidad}%;background:${COLORES_TOP5[item.clase]}">
+            </div>
+          </div>
+          <span class="top5-pct">${item.probabilidad}%</span>
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById('resultado').style.display = 'block';
+    }
+  </script>
+
+</body>
+</html>

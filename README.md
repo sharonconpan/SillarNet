@@ -1,8 +1,26 @@
-# Sistema Propuesto
+# SillarNet
 
-Para abordar la problemática de la inspección del patrimonio construido en sillar, este proyecto implementa una arquitectura híbrida basada en visión por computadora y aprendizaje profundo para la detección y clasificación automática de patologías en estructuras de sillar. El sistema integra un modelo de inteligencia artificial entrenado sobre un dataset especializado y una aplicación web que permite visualizar los resultados y apoyar la toma de decisiones en tareas de monitoreo, conservación y gestión del riesgo.
+Sistema de monitoreo y clasificación de patologías en estructuras de sillar del Centro Histórico de Arequipa.
 
-## Instalación y Ejecución
+## Stack
+
+| Capa | Tecnología |
+|---|---|
+| Backend | FastAPI + SQLAlchemy 2 (async) + PostgreSQL + JWT |
+| ML | TensorFlow/Keras (modelo pre-entrenado, 5 clases) |
+| Frontend | React 18 + TypeScript + Vite + Tailwind CSS |
+| Mapa | react-leaflet + leaflet-heat (OpenStreetMap) |
+| Base de datos | PostgreSQL 16 (via Docker Compose) |
+
+## Requisitos previos
+
+- Python 3.10+
+- Node.js 18+
+- Docker Desktop
+
+---
+
+## Instalación
 
 ### 1. Clonar el repositorio
 
@@ -11,42 +29,90 @@ git clone https://github.com/sharonconpan/SillarNet
 cd SillarNet
 ```
 
-### 2. Instalar Python 3.10
+### 2. Configurar variables de entorno
 
 ```bash
-py install 3.10
+cp .env.example .env
 ```
 
-### 3. Crear y activar el entorno virtual
+### 3. Levantar la base de datos
 
 ```bash
-py -3.10 -m venv sillar_tf310
-sillar_tf310\Scripts\activate
+docker compose up -d
 ```
 
-### 4. Instalar dependencias
+PostgreSQL queda disponible en `localhost:5432`.
+
+### 4. Instalar dependencias del backend
 
 ```bash
-pip install -r requirements.txt
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS/Linux
+
+pip install -r requirements-backend.txt
 ```
 
-### 5. Iniciar el servidor
+### 5. Aplicar migraciones de base de datos
 
 ```bash
-python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+cd backend
+alembic upgrade head
+cd ..
 ```
 
-## Acceso a la Aplicación
+### 6. Instalar dependencias del frontend
 
-Una vez iniciado el servidor, abre tu navegador y accede a:
-
-```text
-http://localhost:8000
+```bash
+cd frontend
+npm install
 ```
+
+---
+
+## Ejecución (desarrollo)
+
+Levanta la base de datos primero (si no está corriendo):
+
+```bash
+docker compose up -d
+```
+
+Luego abre **dos terminales**:
+
+**Terminal 1 — Backend:**
+```bash
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS/Linux
+cd backend
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+Accede en: **http://localhost:5173**
+
+---
 
 ## Funcionalidades
 
-- Detección automática de patologías en estructuras de sillar.
-- Clasificación de imágenes mediante modelos de Deep Learning.
-- Visualización de resultados a través de una interfaz web interactiva.
-- Soporte para monitoreo y evaluación del estado de conservación del patrimonio arquitectónico.
+- **Mapa interactivo público** — Centro Histórico de Arequipa con heatmap de deterioro (verde → morado por severidad)
+- **Clasificación de imágenes** — Sube una foto de sillar, obtén la clase, confianza, gráfico top-5 y alerta de deterioro
+- **Geolocalización** — Etiqueta cada análisis con coordenadas GPS reales
+- **Historial por usuario** — Pestañas: Pendientes / Completados / Descartados
+- **Flujo de conservación** — Al marcar un análisis como Completado, el sistema sugiere re-analizar el sitio para verificar la reparación
+- **PWA** — Instalable en Android/iOS desde el navegador
+
+## Clases del modelo
+
+| Clase | Urgencia | Color |
+|---|---|---|
+| buen_estado | Ninguna | 🟢 Verde |
+| suciedad_leve | Secundaria | 🟡 Amarillo |
+| suciedad_grave | Secundaria | 🟠 Naranja |
+| deterioro_leve | PRIORITARIA | 🔴 Rojo |
+| deterioro_grave | CRÍTICA | 🟣 Morado |

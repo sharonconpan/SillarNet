@@ -1,18 +1,27 @@
-# Entornos virtuales
+# Python virtual environments
 sillar_tf310/
 venv/
+.venv/
 
-# Python
+# Python bytecode
 __pycache__/
 *.pyc
+*.pyo
 
 # Jupyter
 .ipynb_checkpoints/
 
-# Archivos de sistema
+# Environment files (contain secrets)
+.env
+
+# Uploaded images (runtime data)
+uploads/
+
+# Frontend dependencies and build
+frontend/node_modules/
+frontend/dist/
+frontend/.pwa-assets/
+
+# OS
 .DS_Store
 Thumbs.db
-
-# Jupyter
-.ipynb_checkpoints/
-

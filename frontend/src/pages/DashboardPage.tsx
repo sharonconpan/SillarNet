@@ -41,9 +41,9 @@ export default function DashboardPage() {
   const heatPoints = activeFilter === "all" ? (heatmapData?.points ?? []) : [];
 
   return (
-    <div className="relative h-[calc(100vh-3.5rem)] overflow-hidden bg-stone-100">
+    <div className="relative h-[calc(100vh-3.5rem)] bg-stone-100">
 
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 overflow-hidden">
         {(heatLoading || markersLoading) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-100 z-10 gap-3">
             <div className="w-8 h-8 rounded-full border-[3px] border-brand-500 border-t-transparent animate-spin" />
@@ -108,7 +108,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setSheetOpen((o) => !o)}
-            className="w-full px-5 pt-3 pb-4 flex flex-col items-center gap-2.5 active:opacity-80 transition-opacity"
+            className="w-full px-5 pt-3 pb-[2.1rem] flex flex-col items-center gap-2.5 active:opacity-80 transition-opacity"
             aria-label={sheetOpen ? "Cerrar panel" : "Abrir panel"}
           >
             <span className="w-9 h-[3px] bg-stone-200 rounded-full" />
@@ -179,6 +179,7 @@ export default function DashboardPage() {
           </div>
 
         </div>
+        <div style={{ height: "env(safe-area-inset-bottom, 0px)" }} className="bg-white/95" />
       </div>
     </div>
   );

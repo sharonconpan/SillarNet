@@ -78,6 +78,8 @@ async def get_markers(db: AsyncSession = Depends(get_db)):
             color=a.color,
             location_label=a.location_label,
             created_at=a.created_at.isoformat(),
+            stored_image_url=f"/uploads/{a.stored_path}",
+            status=a.status.value,
         )
         for a in analyses
     ]

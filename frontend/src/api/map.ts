@@ -13,6 +13,8 @@ export interface MapMarker {
   color: string;
   location_label: string | null;
   created_at: string;
+  stored_image_url: string | null;
+  status: string | null;
 }
 
 export interface HeatmapResponse {

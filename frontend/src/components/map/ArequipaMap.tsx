@@ -67,21 +67,37 @@ export default function ArequipaMap({ heatPoints, markers }: Props) {
           }}
         >
           <Popup className="sillarnet-popup">
-            <div style={{ minWidth: 140 }}>
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  backgroundColor: m.color,
-                  display: "inline-block",
-                  marginRight: 6,
-                  verticalAlign: "middle",
-                }}
-              />
-              <span style={{ fontWeight: 700, fontSize: 13, verticalAlign: "middle" }}>
-                {CLASS_LABELS[m.predicted_class] ?? m.predicted_class}
-              </span>
+            <div style={{ minWidth: 160 }}>
+              {m.stored_image_url && (
+                <img
+                  src={m.stored_image_url}
+                  alt={CLASS_LABELS[m.predicted_class] ?? m.predicted_class}
+                  style={{
+                    width: "100%",
+                    height: 90,
+                    objectFit: "cover",
+                    borderRadius: 6,
+                    marginBottom: 6,
+                    display: "block",
+                  }}
+                />
+              )}
+              <div>
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: m.color,
+                    display: "inline-block",
+                    marginRight: 6,
+                    verticalAlign: "middle",
+                  }}
+                />
+                <span style={{ fontWeight: 700, fontSize: 13, verticalAlign: "middle" }}>
+                  {CLASS_LABELS[m.predicted_class] ?? m.predicted_class}
+                </span>
+              </div>
               {m.location_label && (
                 <p style={{ fontSize: 11, color: "#78716c", marginTop: 4, marginBottom: 0 }}>
                   {m.location_label}

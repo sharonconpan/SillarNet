@@ -21,6 +21,9 @@ def upgrade() -> None:
         )
     """)
 
+    # Drop the default first so PostgreSQL can cast the column type freely
+    op.execute("ALTER TABLE analyses ALTER COLUMN status DROP DEFAULT")
+
     # Migrate column, mapping 'discarded' -> 'closed' for any existing rows
     op.execute("""
         ALTER TABLE analyses
@@ -35,6 +38,9 @@ def upgrade() -> None:
     op.execute("DROP TYPE analysisstatus")
     op.execute("ALTER TYPE analysisstatus_new RENAME TO analysisstatus")
 
+    # Restore the default using the renamed type
+    op.execute("ALTER TABLE analyses ALTER COLUMN status SET DEFAULT 'pending'::analysisstatus")
+
 
 def downgrade() -> None:
     op.execute("""
@@ -42,6 +48,7 @@ def downgrade() -> None:
             'pending', 'in_progress', 'completed', 'discarded'
         )
     """)
+    op.execute("ALTER TABLE analyses ALTER COLUMN status DROP DEFAULT")
     op.execute("""
         ALTER TABLE analyses
         ALTER COLUMN status TYPE analysisstatus_old
@@ -52,3 +59,4 @@ def downgrade() -> None:
     """)
     op.execute("DROP TYPE analysisstatus")
     op.execute("ALTER TYPE analysisstatus_old RENAME TO analysisstatus")
+    op.execute("ALTER TABLE analyses ALTER COLUMN status SET DEFAULT 'pending'::analysisstatus")

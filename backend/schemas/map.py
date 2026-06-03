@@ -14,6 +14,8 @@ class MapMarker(BaseModel):
     color: str
     location_label: str | None
     created_at: str
+    stored_image_url: str | None = None
+    status: str | None = None
 
 
 class HeatmapResponse(BaseModel):

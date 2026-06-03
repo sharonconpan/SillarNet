@@ -55,11 +55,23 @@ pip install -r requirements.txt
 
 ### 5. Aplicar migraciones de base de datos
 
+> Requiere que la venv esté activa y que la base de datos esté corriendo (paso 3).
+
 ```bash
 cd backend
 alembic upgrade head
 cd ..
 ```
+
+Para verificar que las migraciones se aplicaron correctamente:
+
+```bash
+cd backend
+alembic current
+cd ..
+```
+
+Debe mostrar `003 (head)`.
 
 ### 6. Instalar dependencias del frontend
 

@@ -7,8 +7,6 @@ import ProbabilityChart from "@/components/analysis/ProbabilityChart";
 import { useState } from "react";
 import type { Top5Item } from "@/api/analysis";
 
-// ─── Same two-dimensional logic as AnalyzePage ───────────────────────────────
-
 type AssessmentLevel = "grave" | "leve" | "trace" | "none";
 
 function assess(predicted: string, leveKey: string, graveKey: string, probs: Record<string, number>) {
@@ -39,8 +37,6 @@ const STATUS_ACTIONS: Record<StatusKey, { label: string; next: StatusKey }[]> = 
   closed:      [{ label: "Reabrir",   next: "pending"     }],
 };
 
-// ─── Page ────────────────────────────────────────────────────────────────────
-
 export default function AnalysisDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -69,7 +65,6 @@ export default function AnalysisDetailPage() {
     );
   }
 
-  // Init notes from fetched data once
   if (!notesInit) {
     setNotes(analysis.notes ?? "");
     setNotesInit(true);
@@ -84,7 +79,6 @@ export default function AnalysisDetailPage() {
   return (
     <div className="min-h-screen bg-stone-50 pb-28 md:pb-12">
 
-      {/* ── Header ─────────────────────────────────────────────── */}
       <div className="sticky top-14 z-40 bg-stone-50/95 backdrop-blur-sm border-b border-stone-100 px-4 py-3 flex items-center gap-3 max-w-2xl mx-auto">
         <button
           onClick={() => navigate(-1)}
@@ -111,7 +105,6 @@ export default function AnalysisDetailPage() {
 
       <div className="px-4 pt-4 max-w-2xl mx-auto space-y-4">
 
-        {/* ── Image ──────────────────────────────────────────────── */}
         <div className="rounded-2xl overflow-hidden border border-stone-100 shadow-sm bg-stone-100">
           <img
             src={analysis.stored_image_url}
@@ -120,7 +113,6 @@ export default function AnalysisDetailPage() {
           />
         </div>
 
-        {/* ── Classification banner ─────────────────────────────── */}
         <div
           className="rounded-2xl px-5 py-5 text-white"
           style={{ background: CLASS_COLORS[analysis.predicted_class] ?? analysis.color }}

@@ -6,8 +6,9 @@ import { useAuthStore } from "@/store/authStore";
 import DashboardPage  from "@/pages/DashboardPage";
 import LoginPage      from "@/pages/LoginPage";
 import RegisterPage   from "@/pages/RegisterPage";
-import AnalyzePage    from "@/pages/AnalyzePage";
-import HistoryPage    from "@/pages/HistoryPage";
+import AnalyzePage        from "@/pages/AnalyzePage";
+import HistoryPage        from "@/pages/HistoryPage";
+import AnalysisDetailPage from "@/pages/AnalysisDetailPage";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Navbar         from "@/components/layout/Navbar";
 import BottomNav      from "@/components/layout/BottomNav";
@@ -41,8 +42,9 @@ export default function App() {
               <Route path="/login"    element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route element={<ProtectedRoute />}>
-                <Route path="/analyze" element={<AnalyzePage />} />
-                <Route path="/history" element={<HistoryPage />} />
+                <Route path="/analyze"      element={<AnalyzePage />} />
+                <Route path="/history"      element={<HistoryPage />} />
+                <Route path="/history/:id"  element={<AnalysisDetailPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

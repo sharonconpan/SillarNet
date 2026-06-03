@@ -4,18 +4,20 @@ import AnalysisCard from "@/components/history/AnalysisCard";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, ClipboardList } from "lucide-react";
 
-type Tab = "pending" | "completed" | "discarded";
+type Tab = "pending" | "in_progress" | "completed" | "closed";
 
 const TAB_EMPTY: Record<Tab, string> = {
-  pending:   "pendientes",
-  completed: "completados",
-  discarded: "descartados",
+  pending:     "pendientes",
+  in_progress: "en progreso",
+  completed:   "completados",
+  closed:   "archivados",
 };
 
 const TABS: { key: Tab; label: string; dot: string }[] = [
-  { key: "pending",   label: "Pendientes",  dot: "#C9973A" },
-  { key: "completed", label: "Completados", dot: "#5E8A5C" },
-  { key: "discarded", label: "Descartados", dot: "#9ca3af" },
+  { key: "pending",     label: "Pendientes",   dot: "#C9973A" },
+  { key: "in_progress", label: "En progreso",  dot: "#0284C7" },
+  { key: "completed",   label: "Completados",  dot: "#5E8A5C" },
+  { key: "closed",   label: "Cerrados",     dot: "#9ca3af" },
 ];
 
 export default function HistoryPage() {

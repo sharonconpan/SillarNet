@@ -18,19 +18,43 @@ URGENCIA = {
 }
 
 COLORES = {
-    "buen_estado": "#2ecc71",
-    "suciedad_leve": "#f1c40f",
-    "suciedad_grave": "#e67e22",
-    "deterioro_leve": "#e74c3c",
-    "deterioro_grave": "#8e44ad",
+    "buen_estado":    "#5E8A5C",
+    "suciedad_leve":  "#C9973A",
+    "suciedad_grave": "#C07030",
+    "deterioro_leve": "#B84020",
+    "deterioro_grave":"#7C1D12",
 }
 
 RECOMENDACIONES = {
-    "buen_estado": "Sin intervención requerida. Mantenimiento preventivo anual.",
-    "suciedad_leve": "Limpieza superficial con agua destilada y cepillo suave. Inspección semestral.",
-    "suciedad_grave": "Limpieza profunda con métodos físico-químicos no abrasivos. Plazo: 3 meses.",
-    "deterioro_leve": "Consolidación superficial con mortero compatible. Plazo: 1 mes.",
-    "deterioro_grave": "INTERVENCIÓN URGENTE. Consolidación estructural. Restricción de acceso recomendada.",
+    "buen_estado": (
+        "La estructura presenta condiciones óptimas de conservación. "
+        "Se recomienda mantener un programa de inspección preventiva anual "
+        "para monitorear posibles cambios en el estado del sillar."
+    ),
+    "suciedad_leve": (
+        "Se detecta acumulación superficial de polvo o depósitos biológicos de baja densidad. "
+        "Se recomienda limpieza con agua desmineralizada y cepillo de cerdas suaves, "
+        "evitando productos abrasivos que puedan afectar la porosidad del sillar. "
+        "Inspección de seguimiento en 6 meses."
+    ),
+    "suciedad_grave": (
+        "Presencia significativa de costras, eflorescencias o colonización biológica "
+        "que compromete la superficie del sillar. Se requiere limpieza especializada "
+        "con métodos físico-químicos compatibles con la piedra volcánica, aplicados "
+        "por personal técnico capacitado. Plazo recomendado: dentro de 3 meses."
+    ),
+    "deterioro_leve": (
+        "Deterioro estructural incipiente detectado con riesgo de avance progresivo. "
+        "Se recomienda consolidación superficial con mortero de cal compatible, "
+        "aplicado por conservadores especializados en patrimonio pétreo. "
+        "No diferir la intervención más de 1 mes para evitar agravamiento."
+    ),
+    "deterioro_grave": (
+        "ESTADO CRÍTICO: deterioro estructural avanzado con riesgo de pérdida irreversible "
+        "del bien patrimonial. Se requiere intervención inmediata por ingenieros estructurales "
+        "y especialistas en conservación. Restricción de acceso a la zona afectada "
+        "hasta la conclusión de la intervención de emergencia."
+    ),
 }
 
 # Weight used for heatmap aggregation (0–1 severity scale)

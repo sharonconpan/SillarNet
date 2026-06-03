@@ -18,7 +18,7 @@ export interface Analysis {
   latitude: number | null;
   longitude: number | null;
   location_label: string | null;
-  status: "pending" | "discarded" | "completed";
+  status: "pending" | "in_progress" | "completed" | "closed";
   re_analyze_suggested: boolean;
   notes: string | null;
   created_at: string;
@@ -52,7 +52,7 @@ export const analysisApi = {
   get: (id: string) =>
     client.get<Analysis>(`/analyses/${id}`).then((r) => r.data),
 
-  updateStatus: (id: string, status: "pending" | "discarded" | "completed") =>
+  updateStatus: (id: string, status: "pending" | "in_progress" | "completed" | "closed") =>
     client.patch<Analysis>(`/analyses/${id}/status`, { status }).then((r) => r.data),
 
   updateNotes: (id: string, notes: string) =>

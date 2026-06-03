@@ -28,7 +28,7 @@ async def get_heatmap(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Analysis).where(
             Analysis.latitude.is_not(None),
-            Analysis.status != AnalysisStatus.discarded,
+            Analysis.status != AnalysisStatus.closed,
         )
     )
     analyses = result.scalars().all()
@@ -65,7 +65,7 @@ async def get_markers(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Analysis).where(
             Analysis.latitude.is_not(None),
-            Analysis.status != AnalysisStatus.discarded,
+            Analysis.status != AnalysisStatus.closed,
         ).order_by(Analysis.created_at.desc())
     )
     analyses = result.scalars().all()

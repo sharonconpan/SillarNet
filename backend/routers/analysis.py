@@ -118,7 +118,7 @@ async def list_analyses(
     q = select(Analysis).where(Analysis.user_id == current_user.id)
     count_q = select(func.count()).select_from(Analysis).where(Analysis.user_id == current_user.id)
 
-    if status and status in ("pending", "discarded", "completed"):
+    if status and status in ("pending", "in_progress", "completed", "closed"):
         status_enum = AnalysisStatus(status)
         q = q.where(Analysis.status == status_enum)
         count_q = count_q.where(Analysis.status == status_enum)
@@ -164,7 +164,7 @@ async def update_status(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if body.status not in ("pending", "discarded", "completed"):
+    if body.status not in ("pending", "in_progress", "completed", "closed"):
         raise HTTPException(status_code=422, detail="Invalid status value")
 
     result = await db.execute(

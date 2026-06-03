@@ -19,7 +19,7 @@ export function useAnalysis(id: string) {
 export function useUpdateStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "pending" | "discarded" | "completed" }) =>
+    mutationFn: ({ id, status }: { id: string; status: "pending" | "in_progress" | "completed" | "closed" }) =>
       analysisApi.updateStatus(id, status),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["analyses"] });

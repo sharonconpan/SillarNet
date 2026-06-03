@@ -9,7 +9,7 @@ const FILTERS = [
   { id: "buen_estado",     label: "Buen estado",    color: "#5E8A5C" },
   { id: "suciedad",        label: "Suciedad",       color: "#C07030" },
   { id: "deterioro_leve",  label: "Deterioro leve", color: "#B84020" },
-  { id: "deterioro_grave", label: "Crítico",        color: "#7C1D12" },
+  { id: "deterioro_grave", label: "Deterioro crítico",        color: "#7C1D12" },
 ] as const;
 
 type FilterId = typeof FILTERS[number]["id"];
@@ -19,7 +19,7 @@ const LEGEND = [
   { color: "#C9973A", label: "Suciedad leve" },
   { color: "#C07030", label: "Suciedad grave" },
   { color: "#B84020", label: "Deterioro leve" },
-  { color: "#7C1D12", label: "Crítico" },
+  { color: "#7C1D12", label: "Deterioro crítico" },
 ];
 
 export default function DashboardPage() {
@@ -146,9 +146,9 @@ export default function DashboardPage() {
             <div className="px-5 pb-8 space-y-5">
               <div className="grid grid-cols-3 gap-2.5">
                 {[
-                  { label: "Total",         value: String(total),         accent: "#78614A" },
-                  { label: "Con deterioro", value: `${detPct}%`,          accent: "#B84020" },
-                  { label: "Críticos",      value: String(criticalCount), accent: "#7C1D12" },
+                  { label: "Total", value: String(total), accent: "#78614A" },
+                  { label: "Con deterioro", value: `${detPct}%`, accent: "#B84020" },
+                  { label: "Deteriorio crítico", value: String(criticalCount), accent: "#7C1D12" },
                 ].map(({ label, value, accent }) => (
                   <div
                     key={label}

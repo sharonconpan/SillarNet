@@ -31,7 +31,7 @@ class AnalysisOut(BaseModel):
 
 
 class AnalysisStatusUpdate(BaseModel):
-    status: str  # pending | discarded | completed
+    status: str
 
 
 class AnalysisNotesUpdate(BaseModel):

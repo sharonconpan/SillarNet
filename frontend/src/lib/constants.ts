@@ -23,15 +23,17 @@ export const CLASS_ICONS: Record<string, string> = {
 };
 
 export const STATUS_LABELS: Record<string, string> = {
-  pending: "Pendiente",
-  discarded: "Descartado",
-  completed: "Completado",
+  pending:     "Pendiente",
+  in_progress: "En progreso",
+  completed:   "Completado",
+  closed:      "Cerrado",
 };
 
 export const STATUS_COLORS: Record<string, string> = {
-  pending: "#f59e0b",
-  discarded: "#6b7280",
-  completed: "#10b981",
+  pending:     "#C9973A",
+  in_progress: "#0284C7",
+  completed:   "#5E8A5C",
+  closed:      "#9ca3af",
 };
 
 // Arequipa Plaza de Armas

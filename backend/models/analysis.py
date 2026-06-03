@@ -10,9 +10,10 @@ from database import Base
 
 
 class AnalysisStatus(str, enum.Enum):
-    pending = "pending"
-    discarded = "discarded"
-    completed = "completed"
+    pending     = "pending"
+    in_progress = "in_progress"
+    completed   = "completed"
+    closed      = "closed"
 
 
 class Analysis(Base):

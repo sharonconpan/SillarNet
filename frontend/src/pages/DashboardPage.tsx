@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { useHeatmap, useMarkers } from "@/hooks/useMapData";
+import { useAuthStore } from "@/store/authStore";
 
 const ArequipaMap = lazy(() => import("@/components/map/ArequipaMap"));
 
@@ -22,10 +23,15 @@ const LEGEND = [
 ];
 
 export default function DashboardPage() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { data: heatmapData, isLoading: heatLoading } = useHeatmap();
   const { data: markersData, isLoading: markersLoading } = useMarkers();
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [sheetOpen, setSheetOpen] = useState(false);
+  // On mobile, subtract bottom nav (4rem) when authenticated
+  const mapHeight = isAuthenticated
+    ? "h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-3.5rem)]"
+    : "h-[calc(100dvh-3.5rem)]";
 
   const total             = heatmapData?.total ?? 0;
   const deteriorationCount = heatmapData?.deterioration_count ?? 0;
@@ -41,7 +47,7 @@ export default function DashboardPage() {
   const heatPoints = activeFilter === "all" ? (heatmapData?.points ?? []) : [];
 
   return (
-    <div className="relative h-[calc(100vh-3.5rem)] bg-stone-100">
+    <div className={`relative bg-stone-100 ${mapHeight}`}>
 
       <div className="absolute inset-0 overflow-hidden">
         {(heatLoading || markersLoading) && (
@@ -66,10 +72,6 @@ export default function DashboardPage() {
               Centro Histórico · Arequipa
             </h1>
           </div>
-          <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100">
-            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            EN VIVO
-          </span>
         </div>
 
         <div className="pointer-events-auto flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">

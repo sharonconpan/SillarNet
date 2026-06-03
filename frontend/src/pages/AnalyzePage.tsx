@@ -7,19 +7,20 @@ import ResultCard from "@/components/analysis/ResultCard";
 import DeteriorationAlert from "@/components/analysis/DeteriorationAlert";
 import ProbabilityChart from "@/components/analysis/ProbabilityChart";
 import { analysisApi, type Analysis } from "@/api/analysis";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown, ChevronUp } from "lucide-react";
 
 interface LocationData { lat: number; lng: number; }
 
 export default function AnalyzePage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [location, setLocation] = useState<LocationData | null>(null);
+  const [file, setFile]                   = useState<File | null>(null);
+  const [preview, setPreview]             = useState<string | null>(null);
+  const [location, setLocation]           = useState<LocationData | null>(null);
   const [locationLabel, setLocationLabel] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [result, setResult] = useState<Analysis | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [showLocation, setShowLocation]   = useState(false);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState("");
+  const [result, setResult]               = useState<Analysis | null>(null);
+  const [saving, setSaving]               = useState(false);
 
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -39,12 +40,7 @@ export default function AnalyzePage() {
     setError("");
     setResult(null);
     try {
-      const data = await analysisApi.analyze(
-        file,
-        location?.lat,
-        location?.lng,
-        locationLabel || undefined
-      );
+      const data = await analysisApi.analyze(file, location?.lat, location?.lng, locationLabel || undefined);
       setResult(data);
       qc.invalidateQueries({ queryKey: ["map"] });
     } catch {
@@ -75,81 +71,109 @@ export default function AnalyzePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Analizar imagen</h1>
-        <p className="text-sm text-gray-500 mt-1">Sube una foto del muro de sillar para clasificar su estado</p>
+    <div className="min-h-screen bg-stone-50 pb-28 md:pb-12">
+
+      <div className="px-4 pt-6 pb-2 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold text-stone-800 tracking-tight">Analizar</h1>
+        <p className="text-sm text-stone-400 mt-0.5">
+          Sube una foto del muro de sillar para clasificar su estado
+        </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
-        <ImageUploader onFile={handleFile} preview={preview} disabled={loading} />
+      <div className="px-4 max-w-2xl mx-auto space-y-4">
 
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Ubicación (opcional)</p>
-          <LocationPicker
-            onLocation={setLocation}
-            onLabel={setLocationLabel}
-            location={location}
-            label={locationLabel}
-          />
+        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+          <ImageUploader onFile={handleFile} preview={preview} disabled={loading} />
+
+          <div className="p-4 space-y-4">
+            <button
+              type="button"
+              onClick={() => setShowLocation((s) => !s)}
+              className="w-full flex items-center justify-between text-sm text-stone-500 py-1 hover:text-stone-700 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${location ? "bg-emerald-500" : "bg-stone-300"}`} />
+                {location ? "Ubicación añadida" : "Añadir ubicación (opcional)"}
+              </span>
+              {showLocation
+                ? <ChevronUp className="w-4 h-4" />
+                : <ChevronDown className="w-4 h-4" />}
+            </button>
+
+            {showLocation && (
+              <div className="pt-1 border-t border-stone-100">
+                <LocationPicker
+                  onLocation={setLocation}
+                  onLabel={setLocationLabel}
+                  location={location}
+                  label={locationLabel}
+                />
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border border-red-100 text-red-700 text-sm rounded-xl px-4 py-3">
+                {error}
+              </div>
+            )}
+
+            <button
+              onClick={handleAnalyze}
+              disabled={!file || loading}
+              className="w-full h-12 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Analizando con SillarNet…
+                </>
+              ) : (
+                "Analizar imagen"
+              )}
+            </button>
+          </div>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
-            {error}
+        {result && (
+          <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-5 space-y-5">
+            <ResultCard analysis={result} />
+
+            <DeteriorationAlert
+              predictedClass={result.predicted_class}
+              recommendation={result.recommendation}
+            />
+
+            {!result.is_deterioration && (
+              <div
+                className="rounded-xl px-4 py-3 text-sm"
+                style={{ backgroundColor: "#5E8A5C18", color: "#2D5230" }}
+              >
+                💡 {result.recommendation}
+              </div>
+            )}
+
+            <ProbabilityChart top5={result.top5} />
+
+            {/* Actions */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="h-12 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 disabled:opacity-50 transition-all active:scale-[0.98]"
+              >
+                Guardar
+              </button>
+              <button
+                onClick={handleDiscard}
+                disabled={saving}
+                className="h-12 border border-stone-200 text-stone-600 rounded-xl text-sm font-semibold hover:border-red-300 hover:text-red-600 disabled:opacity-50 transition-all active:scale-[0.98]"
+              >
+                Descartar
+              </button>
+            </div>
           </div>
         )}
-
-        <button
-          onClick={handleAnalyze}
-          disabled={!file || loading}
-          className="w-full bg-brand-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-brand-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Analizando con SillarNet...
-            </>
-          ) : (
-            "Analizar imagen"
-          )}
-        </button>
       </div>
-
-      {result && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
-          <ResultCard analysis={result} />
-          <DeteriorationAlert
-            predictedClass={result.predicted_class}
-            recommendation={result.recommendation}
-          />
-
-          {!result.is_deterioration && (
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-lg px-4 py-3">
-              💡 {result.recommendation}
-            </div>
-          )}
-
-          <ProbabilityChart top5={result.top5} />
-
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 bg-brand-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-brand-700 disabled:opacity-60 transition-colors"
-            >
-              Guardar en historial
-            </button>
-            <button
-              onClick={handleDiscard}
-              disabled={saving}
-              className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:border-red-400 hover:text-red-600 disabled:opacity-60 transition-colors"
-            >
-              Descartar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

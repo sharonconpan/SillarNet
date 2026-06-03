@@ -2,18 +2,24 @@ import { useState } from "react";
 import { useAnalyses } from "@/hooks/useAnalyses";
 import AnalysisCard from "@/components/history/AnalysisCard";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList } from "lucide-react";
 
-type Tab = "pending" | "discarded" | "completed";
+type Tab = "pending" | "completed" | "discarded";
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: "pending", label: "Pendientes" },
-  { key: "completed", label: "Completados" },
-  { key: "discarded", label: "Descartados" },
+const TAB_EMPTY: Record<Tab, string> = {
+  pending:   "pendientes",
+  completed: "completados",
+  discarded: "descartados",
+};
+
+const TABS: { key: Tab; label: string; dot: string }[] = [
+  { key: "pending",   label: "Pendientes",  dot: "#C9973A" },
+  { key: "completed", label: "Completados", dot: "#5E8A5C" },
+  { key: "discarded", label: "Descartados", dot: "#9ca3af" },
 ];
 
 export default function HistoryPage() {
-  const [tab, setTab] = useState<Tab>("pending");
+  const [tab, setTab]   = useState<Tab>("pending");
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isError } = useAnalyses(tab, page);
@@ -24,90 +30,105 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Historial</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gestiona tus análisis de imágenes</p>
-        </div>
+    <div className="min-h-screen bg-stone-50 pb-28 md:pb-12">
+
+      <div className="px-4 pt-6 pb-4 max-w-6xl mx-auto">
+        <h1 className="text-2xl font-bold text-stone-800 tracking-tight">Historial</h1>
+        <p className="text-sm text-stone-400 mt-0.5">Gestiona tus análisis guardados</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200 mb-6">
-        {TABS.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => changeTab(key)}
-            className={cn(
-              "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
-              tab === key
-                ? "border-brand-600 text-brand-600"
-                : "border-transparent text-gray-500 hover:text-gray-800"
-            )}
-          >
-            {label}
-            {data && tab === key && (
-              <span className="ml-1.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
-                {data.total}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Content */}
-      {isLoading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-52 bg-gray-100 rounded-xl animate-pulse" />
+      <div className="px-4 max-w-6xl mx-auto mb-5">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+          {TABS.map(({ key, label, dot }) => (
+            <button
+              key={key}
+              onClick={() => changeTab(key)}
+              className={cn(
+                "flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-150",
+                tab === key
+                  ? "bg-stone-800 text-white shadow-sm"
+                  : "bg-white text-stone-500 border border-stone-200 hover:border-stone-300"
+              )}
+            >
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: tab === key ? "rgba(255,255,255,0.6)" : dot }}
+              />
+              {label}
+              {data && tab === key && (
+                <span className={cn(
+                  "ml-0.5 text-xs px-1.5 py-0.5 rounded-full font-semibold",
+                  "bg-white/20 text-inherit"
+                )}>
+                  {data.total}
+                </span>
+              )}
+            </button>
           ))}
         </div>
-      )}
+      </div>
 
-      {isError && (
-        <div className="text-center py-12 text-red-500 text-sm">
-          Error al cargar el historial.
-        </div>
-      )}
-
-      {data && data.items.length === 0 && (
-        <div className="text-center py-16 text-gray-400 text-sm">
-          No hay registros {tab === "pending" ? "pendientes" : tab === "completed" ? "completados" : "descartados"}.
-        </div>
-      )}
-
-      {data && data.items.length > 0 && (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {data.items.map((a) => (
-              <AnalysisCard key={a.id} analysis={a} />
+      <div className="px-4 max-w-6xl mx-auto">
+        {isLoading && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }, (_, i) => (
+              <div key={`skel-${i}`} className="h-52 bg-stone-200 rounded-2xl animate-pulse" />
             ))}
           </div>
+        )}
 
-          {/* Pagination */}
-          {data.pages > 1 && (
-            <div className="flex items-center justify-center gap-3 mt-8">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-2 rounded-lg border border-gray-200 disabled:opacity-40 hover:border-brand-400 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-sm text-gray-600">
-                Página {page} de {data.pages}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
-                disabled={page === data.pages}
-                className="p-2 rounded-lg border border-gray-200 disabled:opacity-40 hover:border-brand-400 transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+        {isError && (
+          <div className="text-center py-12 text-red-500 text-sm">
+            Error al cargar el historial.
+          </div>
+        )}
+
+        {data?.items.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-stone-100 flex items-center justify-center">
+              <ClipboardList className="w-7 h-7 text-stone-300" />
             </div>
-          )}
-        </>
-      )}
+            <div className="text-center">
+              <p className="text-sm font-medium text-stone-500">Sin registros</p>
+              <p className="text-xs text-stone-400 mt-0.5">
+                No hay análisis {TAB_EMPTY[tab]} aún.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {data && data.items.length > 0 && (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {data.items.map((a) => (
+                <AnalysisCard key={a.id} analysis={a} />
+              ))}
+            </div>
+
+            {data.pages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-8">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="w-10 h-10 flex items-center justify-center rounded-full border border-stone-200 bg-white disabled:opacity-30 hover:border-brand-400 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-sm text-stone-500 font-medium min-w-[80px] text-center">
+                  {page} / {data.pages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
+                  disabled={page === data.pages}
+                  className="w-10 h-10 flex items-center justify-center rounded-full border border-stone-200 bg-white disabled:opacity-30 hover:border-brand-400 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

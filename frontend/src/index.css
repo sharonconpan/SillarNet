@@ -1,12 +1,37 @@
+@import "leaflet/dist/leaflet.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Leaflet CSS — must be imported here so it's bundled */
-@import "leaflet/dist/leaflet.css";
-
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-stone-50 text-stone-900 antialiased;
   }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+.leaflet-bottom {
+  bottom: 5.5rem;
+}
+.leaflet-control-attribution {
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 9px !important;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+  padding: 0 4px !important;
+}
+.leaflet-control-attribution:hover {
+  opacity: 0.9;
+}
+.leaflet-control-attribution a {
+  color: inherit !important;
+}
+.leaflet-attribution-flag {
+  display: none !important;
 }

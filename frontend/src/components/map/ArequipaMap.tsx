@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.heat";
-import { AREQUIPA_CENTER, AREQUIPA_ZOOM, CLASS_LABELS } from "@/lib/constants";
+import { AREQUIPA_CENTER, AREQUIPA_ZOOM, CLASS_LABELS, HEATMAP_GRADIENT } from "@/lib/constants";
 import type { HeatPoint, MapMarker } from "@/api/map";
 import { formatDate } from "@/lib/utils";
 
@@ -22,7 +22,7 @@ function HeatmapLayer({ points }: { points: HeatPoint[] }) {
         radius: 28,
         blur: 20,
         maxZoom: 17,
-        gradient: { 0.1: "#2ecc71", 0.45: "#f1c40f", 0.75: "#e74c3c", 1.0: "#8e44ad" },
+        gradient: HEATMAP_GRADIENT,
       }).addTo(map);
     }
 
@@ -49,22 +49,47 @@ export default function ArequipaMap({ heatPoints, markers }: Props) {
       scrollWheelZoom={true}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        maxZoom={20}
       />
       <HeatmapLayer points={heatPoints} />
       {markers.map((m, i) => (
         <CircleMarker
           key={i}
           center={[m.lat, m.lng]}
-          radius={6}
-          pathOptions={{ fillColor: m.color, color: "#fff", weight: 1.5, fillOpacity: 0.9 }}
+          radius={9}
+          pathOptions={{
+            fillColor: m.color,
+            color: "#fff",
+            weight: 2.5,
+            fillOpacity: 0.92,
+          }}
         >
-          <Popup>
-            <div className="text-xs space-y-0.5">
-              <p className="font-semibold">{CLASS_LABELS[m.predicted_class] ?? m.predicted_class}</p>
-              {m.location_label && <p className="text-gray-500">{m.location_label}</p>}
-              <p className="text-gray-400">{formatDate(m.created_at)}</p>
+          <Popup className="sillarnet-popup">
+            <div style={{ minWidth: 140 }}>
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  backgroundColor: m.color,
+                  display: "inline-block",
+                  marginRight: 6,
+                  verticalAlign: "middle",
+                }}
+              />
+              <span style={{ fontWeight: 700, fontSize: 13, verticalAlign: "middle" }}>
+                {CLASS_LABELS[m.predicted_class] ?? m.predicted_class}
+              </span>
+              {m.location_label && (
+                <p style={{ fontSize: 11, color: "#78716c", marginTop: 4, marginBottom: 0 }}>
+                  {m.location_label}
+                </p>
+              )}
+              <p style={{ fontSize: 11, color: "#a8a29e", marginTop: 2, marginBottom: 0 }}>
+                {formatDate(m.created_at)}
+              </p>
             </div>
           </Popup>
         </CircleMarker>

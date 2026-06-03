@@ -7,11 +7,11 @@ export const CLASS_LABELS: Record<string, string> = {
 };
 
 export const CLASS_COLORS: Record<string, string> = {
-  buen_estado: "#2ecc71",
-  suciedad_leve: "#f1c40f",
-  suciedad_grave: "#e67e22",
-  deterioro_leve: "#e74c3c",
-  deterioro_grave: "#8e44ad",
+  buen_estado:    "#5E8A5C",
+  suciedad_leve:  "#C9973A",
+  suciedad_grave: "#C07030",
+  deterioro_leve: "#B84020",
+  deterioro_grave:"#7C1D12",
 };
 
 export const CLASS_ICONS: Record<string, string> = {
@@ -39,8 +39,8 @@ export const AREQUIPA_CENTER: [number, number] = [-16.3989, -71.537];
 export const AREQUIPA_ZOOM = 16;
 
 export const HEATMAP_GRADIENT = {
-  0.1: "#2ecc71",
-  0.45: "#f1c40f",
-  0.75: "#e74c3c",
-  1.0: "#8e44ad",
+  0.1:  "#5E8A5C",
+  0.45: "#C9973A",
+  0.75: "#B84020",
+  1.0:  "#7C1D12",
 };

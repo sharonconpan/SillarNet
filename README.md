@@ -50,7 +50,7 @@ python -m venv venv
 venv\Scripts\activate        # Windows
 # source venv/bin/activate   # macOS/Linux
 
-pip install -r requirements-backend.txt
+pip install -r requirements.txt
 ```
 
 ### 5. Aplicar migraciones de base de datos

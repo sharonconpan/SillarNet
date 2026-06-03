@@ -17,14 +17,18 @@ export default function DeteriorationAlert({ predictedClass, recommendation }: P
 
   return (
     <div
-      className={`rounded-xl border-2 p-4 ${
-        isGrave
-          ? "bg-purple-50 border-purple-400 text-purple-900"
-          : "bg-red-50 border-red-400 text-red-900"
-      }`}
+      className="rounded-xl border-2 p-4"
+      style={{
+        backgroundColor: isGrave ? "#7C1D1222" : "#B8402012",
+        borderColor:     isGrave ? "#7C1D12"   : "#B84020",
+        color:           isGrave ? "#4A0E08"    : "#6B1F10",
+      }}
     >
       <div className="flex items-start gap-3">
-        <AlertTriangle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isGrave ? "text-purple-600" : "text-red-600"}`} />
+        <AlertTriangle
+          className="w-5 h-5 flex-shrink-0 mt-0.5"
+          style={{ color: isGrave ? "#7C1D12" : "#B84020" }}
+        />
         <div>
           <p className="font-bold text-sm">{MESSAGES[predictedClass]}</p>
           <p className="text-sm mt-1 opacity-90">{recommendation}</p>

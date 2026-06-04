@@ -1,5 +1,0 @@
-buen_estado
-suciedad_leve
-suciedad_grave
-deterioro_leve
-deterioro_grave

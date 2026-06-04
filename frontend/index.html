@@ -1,13 +1,266 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SillarNet — Monitoreo Patrimonial</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SillarNet — Inspección de Patrimonio</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f5f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+    h1 { font-size: 1.8rem; color: #2c3e50; margin-bottom: 4px; }
+    .subtitulo { color: #7f8c8d; font-size: 0.95rem; margin-bottom: 30px; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    .zona-upload {
+      border: 2px dashed #bdc3c7;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.3s;
+      margin-bottom: 20px;
+    }
+    .zona-upload:hover { border-color: #3498db; }
+    .zona-upload input { display: none; }
+    .zona-upload .icono { font-size: 3rem; margin-bottom: 10px; }
+    .zona-upload p { color: #7f8c8d; font-size: 0.95rem; }
+    #preview {
+      width: 100%;
+      max-height: 280px;
+      object-fit: contain;
+      border-radius: 10px;
+      display: none;
+      margin-bottom: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover  { background: #34495e; }
+    button:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+    /* ── Dos columnas de resultado ── */
+    .columnas {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 520px) { .columnas { grid-template-columns: 1fr; } }
+
+    .panel {
+      border-radius: 14px;
+      padding: 20px;
+      color: white;
+    }
+    .panel h3 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.85;
+      margin-bottom: 6px;
+    }
+    /* Índice grande resaltado */
+    .indice-grande {
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .indice-label {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      margin-bottom: 14px;
+    }
+    .clase-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    /* Barras de probabilidad dentro del panel */
+    .prob-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+      font-size: 0.8rem;
+    }
+    .prob-row span:first-child { width: 52px; opacity: 0.9; }
+    .prob-bg {
+      flex: 1;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      height: 7px;
+      overflow: hidden;
+    }
+    .prob-fill { height: 100%; border-radius: 4px; background: rgba(255,255,255,0.75); }
+    .prob-pct  { width: 36px; text-align: right; opacity: 0.9; }
+
+    .cargando {
+      text-align: center;
+      color: #7f8c8d;
+      padding: 20px;
+      display: none;
+    }
+    .spinner {
+      font-size: 2rem;
+      animation: girar 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes girar { to { transform: rotate(360deg); } }
+    .resultado { display: none; }
+
+    /* Colores por clase */
+    .color-ninguno { background: #27ae60; }
+    .color-leve    { background: #e67e22; }
+    .color-grave   { background: #e74c3c; }
+  </style>
+</head>
+<body>
+
+  <h1>🏛️ SillarNet</h1>
+  <p class="subtitulo">Sistema de inspección de patrimonio construido en sillar — Arequipa</p>
+
+  <!-- Upload -->
+  <div class="card">
+    <label class="zona-upload" for="inputFoto">
+      <input type="file" id="inputFoto" accept="image/*">
+      <div class="icono">📷</div>
+      <p>Haz clic o arrastra una foto de la pared de sillar</p>
+      <p style="font-size:0.8rem;margin-top:6px;">JPG, PNG — máx. 10 MB</p>
+    </label>
+    <img id="preview" alt="Vista previa">
+    <button id="btnAnalizar" disabled onclick="analizar()">Analizar imagen</button>
+  </div>
+
+  <!-- Cargando -->
+  <div class="cargando" id="cargando">
+    <div class="spinner">⚙️</div>
+    <p style="margin-top:10px;">Analizando con SillarNet...</p>
+  </div>
+
+  <!-- Resultado -->
+  <div class="card resultado" id="resultado">
+    <p style="font-size:0.82rem;color:#7f8c8d;margin-bottom:14px;text-align:center;">
+      El <strong>índice</strong> va de 0 (sin problema) a 100 (máxima severidad)
+    </p>
+    <div class="columnas">
+      <!-- Panel Deterioro -->
+      <div class="panel" id="panelDeterio">
+        <h3>🧱 Deterioro estructural</h3>
+        <div class="indice-grande" id="idxDeterio">—</div>
+        <div class="indice-label">índice / 100</div>
+        <div class="clase-badge" id="claseDeterio">—</div>
+        <div id="probsDeterio"></div>
+      </div>
+      <!-- Panel Suciedad -->
+      <div class="panel" id="panelSuciedad">
+        <h3>🧹 Suciedad superficial</h3>
+        <div class="indice-grande" id="idxSuciedad">—</div>
+        <div class="indice-label">índice / 100</div>
+        <div class="clase-badge" id="claseSuciedad">—</div>
+        <div id="probsSuciedad"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const COLOR_CLASE = {
+      ninguno : '#27ae60',
+      leve    : '#e67e22',
+      grave   : '#e74c3c'
+    };
+
+    let archivoSeleccionado = null;
+
+    document.getElementById('inputFoto').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      archivoSeleccionado = file;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const preview = document.getElementById('preview');
+        preview.src = ev.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+      document.getElementById('btnAnalizar').disabled = false;
+      document.getElementById('resultado').style.display = 'none';
+    });
+
+    async function analizar() {
+      if (!archivoSeleccionado) return;
+      document.getElementById('btnAnalizar').disabled = true;
+      document.getElementById('cargando').style.display = 'block';
+      document.getElementById('resultado').style.display = 'none';
+
+      const formData = new FormData();
+      formData.append('file', archivoSeleccionado);
+
+      try {
+        const resp = await fetch('http://localhost:8000/analizar', {
+          method: 'POST', body: formData
+        });
+        const data = await resp.json();
+        mostrarResultado(data);
+      } catch (err) {
+        alert('Error conectando con el servidor. ¿Está corriendo el backend?');
+        console.error(err);
+      } finally {
+        document.getElementById('cargando').style.display = 'none';
+        document.getElementById('btnAnalizar').disabled = false;
+      }
+    }
+
+    function renderPanel(panelId, idxId, claseId, probsId, info) {
+      const color = COLOR_CLASE[info.clase];
+      document.getElementById(panelId).style.background = color;
+      document.getElementById(idxId).textContent   = info.indice;
+      document.getElementById(claseId).textContent = info.clase.toUpperCase();
+
+      const clases = ['ninguno', 'leve', 'grave'];
+      document.getElementById(probsId).innerHTML = clases.map(c => `
+        <div class="prob-row">
+          <span>${c}</span>
+          <div class="prob-bg">
+            <div class="prob-fill" style="width:${info[c]}%"></div>
+          </div>
+          <span class="prob-pct">${info[c]}%</span>
+        </div>
+      `).join('');
+    }
+
+    function mostrarResultado(data) {
+      renderPanel('panelDeterio',  'idxDeterio',  'claseDeterio',  'probsDeterio',  data.deterioro);
+      renderPanel('panelSuciedad', 'idxSuciedad', 'claseSuciedad', 'probsSuciedad', data.suciedad);
+      document.getElementById('resultado').style.display = 'block';
+    }
+  </script>
+</body>
 </html>

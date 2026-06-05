@@ -38,10 +38,10 @@ export default function App() {
           <Navbar />
           <main className="flex-1">
             <Routes>
-              <Route path="/"         element={<DashboardPage />} />
               <Route path="/login"    element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route element={<ProtectedRoute />}>
+                <Route path="/"             element={<DashboardPage />} />
                 <Route path="/analyze"      element={<AnalyzePage />} />
                 <Route path="/history"      element={<HistoryPage />} />
                 <Route path="/history/:id"  element={<AnalysisDetailPage />} />

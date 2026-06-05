@@ -27,15 +27,9 @@ export default function DashboardPage() {
   const { data: markersData, isLoading: markersLoading } = useMarkers();
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [sheetOpen, setSheetOpen] = useState(false);
-  // On mobile, subtract bottom nav (4rem) when authenticated
   const mapHeight = isAuthenticated
     ? "h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-3.5rem)]"
     : "h-[calc(100dvh-3.5rem)]";
-
-  const total             = heatmapData?.total ?? 0;
-  const deteriorationCount = heatmapData?.deterioration_count ?? 0;
-  const criticalCount     = heatmapData?.critical_count ?? 0;
-  const detPct            = total > 0 ? Math.round((deteriorationCount / total) * 100) : 0;
 
   const filteredMarkers = (markersData?.markers ?? []).filter((m) => {
     if (activeFilter === "all") return true;
@@ -43,6 +37,62 @@ export default function DashboardPage() {
   });
 
   const heatPoints = activeFilter === "all" ? (heatmapData?.points ?? []) : [];
+
+  // All stats derived from filteredMarkers
+  const filteredTotal  = filteredMarkers.length;
+  const deterioroCount = filteredMarkers.filter((m) => m.predicted_class === "deterioro").length;
+  const suciedadCount  = filteredMarkers.filter((m) => m.predicted_class === "suciedad").length;
+  const detPct         = filteredTotal > 0 ? Math.round((deterioroCount / filteredTotal) * 100) : 0;
+  const sucPct         = filteredTotal > 0 ? Math.round((suciedadCount  / filteredTotal) * 100) : 0;
+
+  const sucLeveCount  = filteredMarkers.filter((m) => m.suciedad_clase === "leve").length;
+  const sucGraveCount = filteredMarkers.filter((m) => m.suciedad_clase === "grave").length;
+  const sucLevePct    = filteredTotal > 0 ? Math.round((sucLeveCount  / filteredTotal) * 100) : 0;
+  const sucGravePct   = filteredTotal > 0 ? Math.round((sucGraveCount / filteredTotal) * 100) : 0;
+
+  const detLeveCount  = filteredMarkers.filter((m) => m.deterioro_clase === "leve").length;
+  const detGraveCount = filteredMarkers.filter((m) => m.deterioro_clase === "grave").length;
+  const detLevePct    = filteredTotal > 0 ? Math.round((detLeveCount  / filteredTotal) * 100) : 0;
+  const detGravePct   = filteredTotal > 0 ? Math.round((detGraveCount / filteredTotal) * 100) : 0;
+
+  type StatCard = { label: string; value: string; accent: string; wide?: boolean };
+
+  function getStatsCards(): StatCard[] {
+    const totalCard: StatCard = { label: "Total", value: String(filteredTotal), accent: "#78614A" };
+    if (activeFilter === "all") {
+      return [
+        totalCard,
+        { label: "Con deterioro", value: `${detPct}%`,  accent: "#B84020" },
+        { label: "Con suciedad",  value: `${sucPct}%`,  accent: "#C07030" },
+      ];
+    }
+    if (activeFilter === "ninguno") {
+      return [
+        totalCard,
+        {
+          label: "Sin patologías detectadas bajo los parámetros establecidos",
+          value: "",
+          accent: "#5E8A5C",
+          wide: true,
+        },
+      ];
+    }
+    if (activeFilter === "suciedad") {
+      return [
+        totalCard,
+        { label: "Suciedad leve",  value: `${sucLevePct}%`,  accent: "#C9973A" },
+        { label: "Suciedad grave", value: `${sucGravePct}%`, accent: "#C07030" },
+      ];
+    }
+    // deterioro
+    return [
+      totalCard,
+      { label: "Deterioro leve",  value: `${detLevePct}%`,  accent: "#B84020" },
+      { label: "Deterioro grave", value: `${detGravePct}%`, accent: "#7C1D12" },
+    ];
+  }
+
+  const statsCards = getStatsCards();
 
   return (
     <div className={`relative bg-stone-100 ${mapHeight}`}>
@@ -116,9 +166,9 @@ export default function DashboardPage() {
             <div className="w-full flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-stone-800">
-                  {total > 0 ? `${total} registros` : "Sin datos aún"}
+                  {filteredTotal > 0 ? `${filteredTotal} registros` : "Sin datos aún"}
                 </span>
-                {total > 0 && (
+                {filteredTotal > 0 && (
                   <span className="text-[11px] text-stone-400 font-medium">analizados</span>
                 )}
               </div>
@@ -126,11 +176,11 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#B84020" }} />
-                  <span className="text-[11px] text-stone-500 font-medium">{deteriorationCount} deterioro</span>
+                  <span className="text-[11px] text-stone-500 font-medium">{detPct}% deterioro</span>
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#7C1D12" }} />
-                  <span className="text-[11px] text-stone-500 font-medium">{criticalCount} crítico</span>
+                  <span className="text-[11px] text-stone-500 font-medium">{detGravePct}% crítico</span>
                 </span>
               </div>
             </div>
@@ -143,18 +193,24 @@ export default function DashboardPage() {
           >
             <div className="px-5 pb-8 space-y-5">
               <div className="grid grid-cols-3 gap-2.5">
-                {[
-                  { label: "Total", value: String(total), accent: "#78614A" },
-                  { label: "Con deterioro", value: `${detPct}%`, accent: "#B84020" },
-                  { label: "Deteriorio crítico", value: String(criticalCount), accent: "#7C1D12" },
-                ].map(({ label, value, accent }) => (
+                {statsCards.map(({ label, value, accent, wide }) => (
                   <div
                     key={label}
-                    className="rounded-2xl px-3 py-3 text-center"
+                    className={`rounded-2xl px-3 py-3 text-center ${wide ? "col-span-2" : ""}`}
                     style={{ backgroundColor: `${accent}0f` }}
                   >
-                    <p className="text-2xl font-bold" style={{ color: accent }}>{value}</p>
-                    <p className="text-[10px] text-stone-400 mt-0.5 uppercase tracking-wider leading-tight">{label}</p>
+                    {wide ? (
+                      <p className="text-[11px] leading-snug font-medium" style={{ color: accent }}>
+                        {label}
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold" style={{ color: accent }}>{value}</p>
+                        <p className="text-[10px] text-stone-400 mt-0.5 uppercase tracking-wider leading-tight">
+                          {label}
+                        </p>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

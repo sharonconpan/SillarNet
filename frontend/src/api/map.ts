@@ -15,6 +15,8 @@ export interface MapMarker {
   created_at: string;
   stored_image_url: string | null;
   status: string | null;
+  suciedad_clase: string | null;
+  deterioro_clase: string | null;
 }
 
 export interface HeatmapResponse {

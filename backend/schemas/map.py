@@ -16,6 +16,8 @@ class MapMarker(BaseModel):
     created_at: str
     stored_image_url: str | None = None
     status: str | None = None
+    suciedad_clase: str | None = None
+    deterioro_clase: str | None = None
 
 
 class HeatmapResponse(BaseModel):

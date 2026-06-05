@@ -89,6 +89,8 @@ async def get_markers(db: AsyncSession = Depends(get_db)):
             created_at=a.created_at.isoformat(),
             stored_image_url=f"/uploads/{a.stored_path}",
             status=a.status.value,
+            suciedad_clase=a.suciedad_clase,
+            deterioro_clase=a.deterioro_clase,
         )
         for a in analyses
     ]

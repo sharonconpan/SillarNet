@@ -19,7 +19,11 @@ router = APIRouter(prefix="/analyses", tags=["analyses"])
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
+_EMPTY_PROBS = {"deterioro": {"ninguno": 0.0, "leve": 0.0, "grave": 0.0}, "suciedad": {"ninguno": 0.0, "leve": 0.0, "grave": 0.0}}
+
+
 def _analysis_to_out(a: Analysis, base_url: str = "") -> AnalysisOut:
+    probs = a.top5_json if isinstance(a.top5_json, dict) else _EMPTY_PROBS
     return AnalysisOut(
         id=str(a.id),
         predicted_class=a.predicted_class,
@@ -28,7 +32,11 @@ def _analysis_to_out(a: Analysis, base_url: str = "") -> AnalysisOut:
         urgency=a.urgency,
         recommendation=a.recommendation,
         is_deterioration=a.is_deterioration,
-        top5=a.top5_json,
+        deterioro_clase=a.deterioro_clase,
+        deterioro_indice=a.deterioro_indice,
+        suciedad_clase=a.suciedad_clase,
+        suciedad_indice=a.suciedad_indice,
+        probs=probs,
         stored_image_url=f"/uploads/{a.stored_path}",
         latitude=a.latitude,
         longitude=a.longitude,
@@ -48,6 +56,10 @@ def _analysis_to_summary(a: Analysis) -> AnalysisSummary:
         color=a.color,
         urgency=a.urgency,
         is_deterioration=a.is_deterioration,
+        deterioro_clase=a.deterioro_clase,
+        deterioro_indice=a.deterioro_indice,
+        suciedad_clase=a.suciedad_clase,
+        suciedad_indice=a.suciedad_indice,
         stored_image_url=f"/uploads/{a.stored_path}",
         latitude=a.latitude,
         longitude=a.longitude,
@@ -85,15 +97,19 @@ async def analizar(
         stored_path=stored_path,
         predicted_class=result["predicted_class"],
         confidence=result["confidence"],
-        top5_json=result["top5"],
+        top5_json=result["probs"],
         color=result["color"],
         urgency=result["urgency"],
         recommendation=result["recommendation"],
         is_deterioration=result["is_deterioration"],
+        deterioro_clase=result["deterioro_clase"],
+        deterioro_indice=result["deterioro_indice"],
+        suciedad_clase=result["suciedad_clase"],
+        suciedad_indice=result["suciedad_indice"],
         latitude=latitude,
         longitude=longitude,
         location_label=location_label,
-        status=AnalysisStatus.pending,
+        status=AnalysisStatus.draft,
     )
     db.add(analysis)
     await db.commit()
@@ -115,8 +131,8 @@ async def list_analyses(
     if limit < 1 or limit > 50:
         limit = 12
 
-    q = select(Analysis).where(Analysis.user_id == current_user.id)
-    count_q = select(func.count()).select_from(Analysis).where(Analysis.user_id == current_user.id)
+    q = select(Analysis).where(Analysis.user_id == current_user.id, Analysis.status != AnalysisStatus.draft)
+    count_q = select(func.count()).select_from(Analysis).where(Analysis.user_id == current_user.id, Analysis.status != AnalysisStatus.draft)
 
     if status and status in ("pending", "in_progress", "completed", "closed"):
         status_enum = AnalysisStatus(status)
@@ -207,3 +223,23 @@ async def update_notes(
     await db.commit()
     await db.refresh(analysis)
     return _analysis_to_out(analysis)
+
+
+@router.delete("/{analysis_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_analysis(
+    analysis_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(Analysis).where(
+            Analysis.id == uuid.UUID(analysis_id),
+            Analysis.user_id == current_user.id,
+        )
+    )
+    analysis = result.scalar_one_or_none()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    await db.delete(analysis)
+    await db.commit()

@@ -10,6 +10,7 @@ from database import Base
 
 
 class AnalysisStatus(str, enum.Enum):
+    draft       = "draft"
     pending     = "pending"
     in_progress = "in_progress"
     completed   = "completed"
@@ -29,6 +30,10 @@ class Analysis(Base):
     urgency: Mapped[str] = mapped_column(String(150), nullable=False)
     recommendation: Mapped[str] = mapped_column(Text, nullable=False)
     is_deterioration: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    deterioro_clase: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    deterioro_indice: Mapped[float | None] = mapped_column(Float, nullable=True)
+    suciedad_clase: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    suciedad_indice: Mapped[float | None] = mapped_column(Float, nullable=True)
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     location_label: Mapped[str | None] = mapped_column(String(255), nullable=True)

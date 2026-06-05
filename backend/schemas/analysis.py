@@ -1,12 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Any
 from pydantic import BaseModel
-
-
-class Top5Item(BaseModel):
-    clase: str
-    probabilidad: float
 
 
 class AnalysisOut(BaseModel):
@@ -17,7 +11,11 @@ class AnalysisOut(BaseModel):
     urgency: str
     recommendation: str
     is_deterioration: bool
-    top5: list[Top5Item]
+    deterioro_clase: str | None
+    deterioro_indice: float | None
+    suciedad_clase: str | None
+    suciedad_indice: float | None
+    probs: dict
     stored_image_url: str
     latitude: float | None
     longitude: float | None
@@ -45,6 +43,10 @@ class AnalysisSummary(BaseModel):
     color: str
     urgency: str
     is_deterioration: bool
+    deterioro_clase: str | None
+    deterioro_indice: float | None
+    suciedad_clase: str | None
+    suciedad_indice: float | None
     stored_image_url: str
     latitude: float | None
     longitude: float | None

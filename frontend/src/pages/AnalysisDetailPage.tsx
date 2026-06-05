@@ -1,32 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useAnalysis, useUpdateStatus, useUpdateNotes } from "@/hooks/useAnalyses";
-import { CLASS_COLORS, CLASS_ICONS, CLASS_LABELS, STATUS_COLORS, STATUS_LABELS } from "@/lib/constants";
+import { CLASS_LABELS, STATUS_COLORS, STATUS_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
-import { CheckCircle2, AlertTriangle, XCircle, ArrowLeft, MapPin, Calendar, Cpu } from "lucide-react";
-import ProbabilityChart from "@/components/analysis/ProbabilityChart";
+import { ArrowLeft, MapPin, Calendar, Cpu } from "lucide-react";
 import { useState } from "react";
-import type { Top5Item } from "@/api/analysis";
-
-type AssessmentLevel = "grave" | "leve" | "trace" | "none";
-
-function assess(predicted: string, leveKey: string, graveKey: string, probs: Record<string, number>) {
-  const lp = probs[leveKey]  ?? 0;
-  const gp = probs[graveKey] ?? 0;
-  let level: AssessmentLevel;
-  if (predicted === graveKey)       level = "grave";
-  else if (predicted === leveKey)   level = "leve";
-  else if (gp >= 15 || lp >= 15)   level = gp >= lp ? "grave" : "leve";
-  else if (Math.max(lp, gp) >= 5)  level = "trace";
-  else                              level = "none";
-  return { level, lp, gp };
-}
-
-const LEVEL_CFG: Record<AssessmentLevel, { bg: string; border: string; text: string; badge: string; icon: React.ReactNode; label: string }> = {
-  grave: { bg: "#7C1D1212", border: "#7C1D12", text: "#7C1D12", badge: "#7C1D12", icon: <XCircle className="w-4 h-4" />, label: "Grave" },
-  leve:  { bg: "#B8402012", border: "#B84020", text: "#B84020", badge: "#B84020", icon: <AlertTriangle className="w-4 h-4" />, label: "Leve" },
-  trace: { bg: "#C9973A12", border: "#C9973A", text: "#B8860B", badge: "#C9973A", icon: <AlertTriangle className="w-4 h-4 opacity-75" />, label: "Indicios" },
-  none:  { bg: "#5E8A5C12", border: "#5E8A5C", text: "#3D6B40", badge: "#5E8A5C", icon: <CheckCircle2 className="w-4 h-4" />, label: "Sin detectar" },
-};
+import ResultCard from "@/components/analysis/ResultCard";
 
 type StatusKey = "pending" | "in_progress" | "completed" | "closed";
 
@@ -70,11 +48,7 @@ export default function AnalysisDetailPage() {
     setNotesInit(true);
   }
 
-  const probs      = Object.fromEntries(analysis.top5.map((t: Top5Item) => [t.clase, t.probabilidad]));
-  const dirtDim    = assess(analysis.predicted_class, "suciedad_leve",  "suciedad_grave",  probs);
-  const detDim     = assess(analysis.predicted_class, "deterioro_leve", "deterioro_grave", probs);
-  const isGood     = analysis.predicted_class === "buen_estado";
-  const actions    = STATUS_ACTIONS[analysis.status as StatusKey] ?? [];
+  const actions = STATUS_ACTIONS[analysis.status as StatusKey] ?? [];
 
   return (
     <div className="min-h-screen bg-stone-50 pb-28 md:pb-12">
@@ -113,97 +87,12 @@ export default function AnalysisDetailPage() {
           />
         </div>
 
-        <div
-          className="rounded-2xl px-5 py-5 text-white"
-          style={{ background: CLASS_COLORS[analysis.predicted_class] ?? analysis.color }}
-        >
-          <div className="flex items-start gap-4">
-            <span className="text-3xl flex-shrink-0 mt-0.5">
-              {CLASS_ICONS[analysis.predicted_class] ?? "❓"}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-75">Clasificación</p>
-              <p className="text-xl font-bold leading-tight mt-0.5">
-                {CLASS_LABELS[analysis.predicted_class] ?? analysis.predicted_class}
-              </p>
-              <p className="text-sm opacity-80 mt-0.5">{analysis.urgency}</p>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="flex justify-between text-xs opacity-70 mb-1.5">
-              <span>Confianza</span>
-              <span className="font-semibold">{analysis.confidence.toFixed(1)}%</span>
-            </div>
-            <div className="bg-white/30 rounded-full h-1.5">
-              <div
-                className="bg-white h-full rounded-full"
-                style={{ width: `${analysis.confidence}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ── Dimension assessment ───────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 space-y-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">
-            Evaluación por dimensión
-          </p>
-          {isGood ? (
-            <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: "#5E8A5C15", border: "1px solid #5E8A5C" }}>
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: "#5E8A5C" }} />
-              <p className="text-sm font-semibold" style={{ color: "#2D5230" }}>Sin patologías detectadas</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { title: "Suciedad", dim: dirtDim, leveLabel: "Suciedad leve", graveLabel: "Suciedad grave" },
-                { title: "Deterioro", dim: detDim, leveLabel: "Deterioro leve", graveLabel: "Deterioro grave" },
-              ].map(({ title, dim, leveLabel, graveLabel }) => {
-                const cfg = LEVEL_CFG[dim.level];
-                const maxProb = Math.max(dim.lp, dim.gp);
-                return (
-                  <div
-                    key={title}
-                    className="rounded-2xl p-4 flex flex-col gap-2 border"
-                    style={{ backgroundColor: cfg.bg, borderColor: cfg.border }}
-                  >
-                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: cfg.text }}>{title}</p>
-                    <div className="flex items-center gap-1.5" style={{ color: cfg.text }}>
-                      {cfg.icon}
-                      <span className="text-sm font-bold">{cfg.label}</span>
-                    </div>
-                    {maxProb >= 1 && (
-                      <div className="space-y-1.5">
-                        {[{ label: leveLabel, prob: dim.lp }, { label: graveLabel, prob: dim.gp }].map(({ label: l, prob }) => (
-                          <div key={l}>
-                            <div className="flex justify-between mb-0.5">
-                              <span className="text-[10px]" style={{ color: cfg.text, opacity: 0.75 }}>{l}</span>
-                              <span className="text-[10px] font-bold" style={{ color: cfg.text }}>{prob.toFixed(1)}%</span>
-                            </div>
-                            <div className="h-1 rounded-full bg-black/10 overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${Math.min(prob, 100)}%`, backgroundColor: cfg.badge }} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <ResultCard analysis={analysis} />
 
         {/* ── Recommendation ─────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5">
           <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-2">Recomendación</p>
           <p className="text-sm text-stone-700 leading-relaxed">{analysis.recommendation}</p>
-        </div>
-
-        {/* ── Probability chart ──────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-3">Probabilidades</p>
-          <ProbabilityChart top5={analysis.top5} />
         </div>
 
         {/* ── Metadata ───────────────────────────────────────────── */}

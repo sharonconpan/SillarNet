@@ -5,21 +5,20 @@ import { useAuthStore } from "@/store/authStore";
 const ArequipaMap = lazy(() => import("@/components/map/ArequipaMap"));
 
 const FILTERS = [
-  { id: "all",             label: "Todos",          color: "#78614A" },
-  { id: "buen_estado",     label: "Buen estado",    color: "#5E8A5C" },
-  { id: "suciedad",        label: "Suciedad",       color: "#C07030" },
-  { id: "deterioro_leve",  label: "Deterioro leve", color: "#B84020" },
-  { id: "deterioro_grave", label: "Deterioro crítico",        color: "#7C1D12" },
+  { id: "all",       label: "Todos",     color: "#78614A" },
+  { id: "ninguno",   label: "Ninguno",   color: "#5E8A5C" },
+  { id: "suciedad",  label: "Suciedad",  color: "#C07030" },
+  { id: "deterioro", label: "Deterioro", color: "#B84020" },
 ] as const;
 
 type FilterId = typeof FILTERS[number]["id"];
 
 const LEGEND = [
-  { color: "#5E8A5C", label: "Buen estado" },
+  { color: "#5E8A5C", label: "Ninguno" },
   { color: "#C9973A", label: "Suciedad leve" },
   { color: "#C07030", label: "Suciedad grave" },
   { color: "#B84020", label: "Deterioro leve" },
-  { color: "#7C1D12", label: "Deterioro crítico" },
+  { color: "#7C1D12", label: "Deterioro grave" },
 ];
 
 export default function DashboardPage() {
@@ -40,7 +39,6 @@ export default function DashboardPage() {
 
   const filteredMarkers = (markersData?.markers ?? []).filter((m) => {
     if (activeFilter === "all") return true;
-    if (activeFilter === "suciedad") return m.predicted_class.startsWith("suciedad");
     return m.predicted_class === activeFilter;
   });
 

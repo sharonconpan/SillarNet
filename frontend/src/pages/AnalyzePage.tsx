@@ -3,115 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import ImageUploader from "@/components/analysis/ImageUploader";
 import LocationPicker from "@/components/analysis/LocationPicker";
-import ProbabilityChart from "@/components/analysis/ProbabilityChart";
 import { analysisApi, type Analysis } from "@/api/analysis";
-import { CLASS_COLORS, CLASS_ICONS, CLASS_LABELS } from "@/lib/constants";
-import { Loader2, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import ResultCard from "@/components/analysis/ResultCard";
 
 interface LocationData { lat: number; lng: number; }
-
-type AssessmentLevel = "grave" | "leve" | "trace" | "none";
-
-interface DimResult { level: AssessmentLevel; leveProb: number; graveProb: number; }
-
-function getProbs(result: Analysis): Record<string, number> {
-  return Object.fromEntries(result.top5.map((t) => [t.clase, t.probabilidad]));
-}
-
-function assessDimension(
-  predicted: string,
-  leveKey: string,
-  graveKey: string,
-  probs: Record<string, number>
-): DimResult {
-  const lp = probs[leveKey]  ?? 0;
-  const gp = probs[graveKey] ?? 0;
-
-  let level: AssessmentLevel;
-  if (predicted === graveKey)          level = "grave";
-  else if (predicted === leveKey)      level = "leve";
-  else if (gp >= 15 || lp >= 15)      level = gp >= lp ? "grave" : "leve";
-  else if (Math.max(lp, gp) >= 5)     level = "trace";
-  else                                 level = "none";
-
-  return { level, leveProb: lp, graveProb: gp };
-}
-
-
-const LEVEL_CFG: Record<AssessmentLevel, { bg: string; border: string; text: string; badge: string }> = {
-  grave: { bg: "#7C1D1212", border: "#7C1D12", text: "#7C1D12", badge: "#7C1D12" },
-  leve:  { bg: "#B8402012", border: "#B84020", text: "#B84020", badge: "#B84020" },
-  trace: { bg: "#C9973A12", border: "#C9973A", text: "#B8860B", badge: "#C9973A" },
-  none:  { bg: "#5E8A5C12", border: "#5E8A5C", text: "#3D6B40", badge: "#5E8A5C" },
-};
-
-const LEVEL_LABEL: Record<AssessmentLevel, string> = {
-  grave: "Grave",
-  leve:  "Leve",
-  trace: "Indicios",
-  none:  "Sin detectar",
-};
-
-const LEVEL_ICON: Record<AssessmentLevel, React.ReactNode> = {
-  grave: <XCircle    className="w-4 h-4 flex-shrink-0" />,
-  leve:  <AlertTriangle className="w-4 h-4 flex-shrink-0" />,
-  trace: <AlertTriangle className="w-4 h-4 flex-shrink-0 opacity-75" />,
-  none:  <CheckCircle2  className="w-4 h-4 flex-shrink-0" />,
-};
-
-interface AssessmentCardProps {
-  title: string;
-  dim: DimResult;
-  leveLabel: string;
-  graveLabel: string;
-}
-
-function AssessmentCard({ title, dim, leveLabel, graveLabel }: Readonly<AssessmentCardProps>) {
-  const cfg = LEVEL_CFG[dim.level];
-  const maxProb = Math.max(dim.leveProb, dim.graveProb);
-
-  return (
-    <div
-      className="rounded-2xl p-4 flex flex-col gap-3 border"
-      style={{ backgroundColor: cfg.bg, borderColor: cfg.border }}
-    >
-      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: cfg.text }}>
-        {title}
-      </p>
-
-      <div className="flex items-center gap-1.5" style={{ color: cfg.text }}>
-        {LEVEL_ICON[dim.level]}
-        <span className="text-sm font-bold">{LEVEL_LABEL[dim.level]}</span>
-      </div>
-
-      {maxProb >= 1 && (
-        <div className="space-y-1.5">
-          {[
-            { label: leveLabel,  prob: dim.leveProb  },
-            { label: graveLabel, prob: dim.graveProb },
-          ].map(({ label, prob }) => (
-            <div key={label}>
-              <div className="flex justify-between items-center mb-0.5">
-                <span className="text-[10px] font-medium" style={{ color: cfg.text, opacity: 0.75 }}>
-                  {label}
-                </span>
-                <span className="text-[10px] font-bold" style={{ color: cfg.text }}>
-                  {prob.toFixed(1)}%
-                </span>
-              </div>
-              <div className="h-1 rounded-full bg-black/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(prob, 100)}%`, backgroundColor: cfg.badge }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function buildConfirmContent(isNewFile: boolean) {
   if (isNewFile) {
@@ -239,7 +135,7 @@ export default function AnalyzePage() {
   async function executeClose(then?: File) {
     if (result) {
       setSaving(true);
-      await analysisApi.updateStatus(result.id, "closed").catch(() => {});
+      await analysisApi.delete(result.id).catch(() => {});
       setSaving(false);
       qc.invalidateQueries({ queryKey: ["analyses"] });
     }
@@ -262,10 +158,6 @@ export default function AnalyzePage() {
     navigate("/history");
   }
 
-  const probs    = result ? getProbs(result) : {};
-  const dirtDim  = result ? assessDimension(result.predicted_class, "suciedad_leve",  "suciedad_grave",  probs) : null;
-  const detDim   = result ? assessDimension(result.predicted_class, "deterioro_leve", "deterioro_grave", probs) : null;
-  const isGood   = result?.predicted_class === "buen_estado";
   const canAnalyze = !!file && !!location && !loading;
 
   const isNewFile = pendingAction instanceof File;
@@ -323,97 +215,13 @@ export default function AnalyzePage() {
         </div>
 
         {result && (
-          <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
-
-            <div
-              className="px-5 py-5 text-white"
-              style={{ background: CLASS_COLORS[result.predicted_class] ?? result.color }}
-            >
-              <div className="flex items-start gap-4">
-                <span className="text-3xl flex-shrink-0 mt-0.5">
-                  {CLASS_ICONS[result.predicted_class] ?? "❓"}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-75">
-                    Clasificación principal
-                  </p>
-                  <p className="text-xl font-bold leading-tight mt-0.5">
-                    {CLASS_LABELS[result.predicted_class] ?? result.predicted_class}
-                  </p>
-                  <p className="text-sm opacity-80 mt-0.5">{result.urgency}</p>
-                </div>
+          <>
+            <ResultCard analysis={result} />
+            <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-5 space-y-4">
+              <div className="bg-stone-50 rounded-xl px-4 py-3 text-sm text-stone-600">
+                <span className="font-semibold text-stone-700">Recomendación: </span>
+                {result.recommendation}
               </div>
-
-              <div className="mt-4">
-                <div className="flex justify-between text-xs opacity-70 mb-1.5">
-                  <span>Confianza del modelo</span>
-                  <span className="font-semibold">{result.confidence.toFixed(1)}%</span>
-                </div>
-                <div className="bg-white/30 rounded-full h-1.5">
-                  <div
-                    className="bg-white h-full rounded-full transition-all duration-700"
-                    style={{ width: `${result.confidence}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 space-y-5">
-              {isGood ? (
-                <div
-                  className="rounded-2xl p-4 flex items-center gap-3 border"
-                  style={{ backgroundColor: "#5E8A5C15", borderColor: "#5E8A5C" }}
-                >
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0" style={{ color: "#5E8A5C" }} />
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: "#2D5230" }}>
-                      Sin patologías detectadas
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: "#4A7A50" }}>
-                      {result.recommendation}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-2">
-                      Evaluación por dimensión
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {dirtDim && (
-                        <AssessmentCard
-                          title="Suciedad"
-                          dim={dirtDim}
-                          leveLabel="Suciedad leve"
-                          graveLabel="Suciedad grave"
-                        />
-                      )}
-                      {detDim && (
-                        <AssessmentCard
-                          title="Deterioro"
-                          dim={detDim}
-                          leveLabel="Deterioro leve"
-                          graveLabel="Deterioro grave"
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="bg-stone-50 rounded-xl px-4 py-3 text-sm text-stone-600">
-                    <span className="font-semibold text-stone-700">Recomendación: </span>
-                    {result.recommendation}
-                  </div>
-                </>
-              )}
-
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-3">
-                  Probabilidades por clase
-                </p>
-                <ProbabilityChart top5={result.top5} />
-              </div>
-
               <ResultActions
                 pendingAction={pendingAction}
                 saving={saving}
@@ -423,7 +231,7 @@ export default function AnalyzePage() {
                 onSave={handleSave}
               />
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>

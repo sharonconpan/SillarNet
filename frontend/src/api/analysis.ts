@@ -1,19 +1,29 @@
 import client from "./client";
 
-export interface Top5Item {
-  clase: string;
-  probabilidad: number;
+export interface ModelProbs {
+  ninguno: number;
+  leve: number;
+  grave: number;
+}
+
+export interface Probs {
+  deterioro: ModelProbs;
+  suciedad: ModelProbs;
 }
 
 export interface Analysis {
   id: string;
-  predicted_class: string;
+  predicted_class: "ninguno" | "deterioro" | "suciedad";
   confidence: number;
   color: string;
   urgency: string;
   recommendation: string;
   is_deterioration: boolean;
-  top5: Top5Item[];
+  deterioro_clase: string | null;
+  deterioro_indice: number | null;
+  suciedad_clase: string | null;
+  suciedad_indice: number | null;
+  probs: Probs;
   stored_image_url: string;
   latitude: number | null;
   longitude: number | null;
@@ -24,7 +34,7 @@ export interface Analysis {
   created_at: string;
 }
 
-export interface AnalysisSummary extends Omit<Analysis, "top5" | "recommendation"> {}
+export interface AnalysisSummary extends Omit<Analysis, "recommendation" | "probs"> {}
 
 export interface PaginatedAnalyses {
   items: AnalysisSummary[];
@@ -57,4 +67,7 @@ export const analysisApi = {
 
   updateNotes: (id: string, notes: string) =>
     client.patch<Analysis>(`/analyses/${id}/notes`, { notes }).then((r) => r.data),
+
+  delete: (id: string) =>
+    client.delete(`/analyses/${id}`),
 };

@@ -5,28 +5,29 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-# TensorFlow is imported lazily inside load() to avoid slow startup if not needed
 _tf = None
 
+CLASS_NAMES = ['ninguno', 'leve', 'grave']
+PESOS = {'ninguno': 0, 'leve': 50, 'grave': 100}
+
+COLORES = {
+    "ninguno":         "#5E8A5C",
+    "suciedad_leve":   "#C9973A",
+    "suciedad_grave":  "#C07030",
+    "deterioro_leve":  "#B84020",
+    "deterioro_grave": "#7C1D12",
+}
 
 URGENCIA = {
-    "buen_estado": "ninguna",
-    "suciedad_leve": "secundaria — sin deterioro estructural",
-    "suciedad_grave": "secundaria — sin deterioro estructural",
-    "deterioro_leve": "PRIORITARIA — deterioro estructural",
+    "ninguno":         "Sin patologías detectadas",
+    "suciedad_leve":   "Secundaria — suciedad superficial leve",
+    "suciedad_grave":  "Secundaria — suciedad superficial grave",
+    "deterioro_leve":  "PRIORITARIA — deterioro estructural",
     "deterioro_grave": "CRÍTICA — deterioro estructural grave",
 }
 
-COLORES = {
-    "buen_estado":    "#5E8A5C",
-    "suciedad_leve":  "#C9973A",
-    "suciedad_grave": "#C07030",
-    "deterioro_leve": "#B84020",
-    "deterioro_grave":"#7C1D12",
-}
-
 RECOMENDACIONES = {
-    "buen_estado": (
+    "ninguno": (
         "La estructura presenta condiciones óptimas de conservación. "
         "Se recomienda mantener un programa de inspección preventiva anual "
         "para monitorear posibles cambios en el estado del sillar."
@@ -57,62 +58,94 @@ RECOMENDACIONES = {
     ),
 }
 
-# Weight used for heatmap aggregation (0–1 severity scale)
 HEATMAP_WEIGHT = {
-    "buen_estado": 0.1,
-    "suciedad_leve": 0.25,
-    "suciedad_grave": 0.45,
-    "deterioro_leve": 0.75,
+    "ninguno":         0.1,
+    "suciedad_leve":   0.35,
+    "suciedad_grave":  0.55,
+    "deterioro_leve":  0.75,
     "deterioro_grave": 1.0,
 }
 
 
-class SillarNetModel:
+def _calcular_indice(probs_dict: dict) -> float:
+    return round(
+        PESOS['ninguno'] * probs_dict['ninguno'] / 100
+        + PESOS['leve']  * probs_dict['leve']    / 100
+        + PESOS['grave'] * probs_dict['grave']   / 100,
+        2,
+    )
+
+
+class SillarNetDualModel:
     def __init__(self):
-        self._model = None
-        self._class_names: list[str] = []
+        self._model_det = None
+        self._model_suc = None
         self._loaded = False
 
-    def load(self, model_path: Path, classes_path: Path) -> None:
+    def load(self, model_deterioro_path: Path, model_suciedad_path: Path) -> None:
         global _tf
         import tensorflow as tf
         _tf = tf
 
-        print(f"Loading model from: {model_path}")
-        self._model = tf.keras.models.load_model(str(model_path))
-        self._class_names = classes_path.read_text().splitlines()
+        print(f"Loading deterioro model : {model_deterioro_path}")
+        self._model_det = tf.keras.models.load_model(str(model_deterioro_path))
+        print(f"Loading suciedad  model : {model_suciedad_path}")
+        self._model_suc = tf.keras.models.load_model(str(model_suciedad_path))
         self._loaded = True
-        print(f"Model loaded. Classes: {self._class_names}")
+        print(f"✅ Both models loaded. Classes: {CLASS_NAMES}")
 
     def _preprocess(self, image_bytes: bytes) -> "np.ndarray":
         img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         img = img.resize((224, 224))
-        arr = np.array(img, dtype=np.float32) / 255.0
+        # No /255 — EfficientNetB0 handles normalisation internally
+        arr = np.array(img, dtype=np.float32)
         return np.expand_dims(arr, axis=0)
 
     def _predict_sync(self, image_bytes: bytes) -> dict:
         tensor = self._preprocess(image_bytes)
-        predictions = self._model.predict(tensor, verbose=0)[0]
 
-        idx = int(np.argmax(predictions))
-        clase = self._class_names[idx]
-        confidence = round(float(predictions[idx]) * 100, 1)
+        # — Deterioro model —
+        pred_det   = self._model_det.predict(tensor, verbose=0)[0]
+        probs_det  = {CLASS_NAMES[i]: round(float(pred_det[i]) * 100, 1) for i in range(3)}
+        clase_det  = CLASS_NAMES[int(np.argmax(pred_det))]
+        indice_det = _calcular_indice(probs_det)
 
-        top5 = [
-            {"clase": self._class_names[i], "probabilidad": round(float(predictions[i]) * 100, 1)}
-            for i in np.argsort(predictions)[::-1]
-        ]
+        # — Suciedad model —
+        pred_suc   = self._model_suc.predict(tensor, verbose=0)[0]
+        probs_suc  = {CLASS_NAMES[i]: round(float(pred_suc[i]) * 100, 1) for i in range(3)}
+        clase_suc  = CLASS_NAMES[int(np.argmax(pred_suc))]
+        indice_suc = _calcular_indice(probs_suc)
+
+        # — Combined class (deterioro takes priority as structural risk) —
+        if clase_det != "ninguno":
+            predicted_class = "deterioro"
+            combined_key    = f"deterioro_{clase_det}"
+            confidence      = round(float(np.max(pred_det)) * 100, 1)
+        elif clase_suc != "ninguno":
+            predicted_class = "suciedad"
+            combined_key    = f"suciedad_{clase_suc}"
+            confidence      = round(float(np.max(pred_suc)) * 100, 1)
+        else:
+            predicted_class = "ninguno"
+            combined_key    = "ninguno"
+            confidence      = round(max(float(np.max(pred_det)), float(np.max(pred_suc))) * 100, 1)
 
         return {
-            "predicted_class": clase,
-            "confidence": confidence,
-            "color": COLORES[clase],
-            "urgency": URGENCIA[clase],
-            "recommendation": RECOMENDACIONES[clase],
-            "is_deterioration": clase.startswith("deterioro"),
-            "needs_maintenance": clase != "buen_estado",
-            "top5": top5,
-            "heatmap_weight": HEATMAP_WEIGHT.get(clase, 0.5),
+            "predicted_class":  predicted_class,
+            "confidence":       confidence,
+            "color":            COLORES[combined_key],
+            "urgency":          URGENCIA[combined_key],
+            "recommendation":   RECOMENDACIONES[combined_key],
+            "is_deterioration": predicted_class == "deterioro",
+            "heatmap_weight":   HEATMAP_WEIGHT[combined_key],
+            "deterioro_clase":  clase_det,
+            "deterioro_indice": indice_det,
+            "suciedad_clase":   clase_suc,
+            "suciedad_indice":  indice_suc,
+            "probs": {
+                "deterioro": probs_det,
+                "suciedad":  probs_suc,
+            },
         }
 
     async def predict(self, image_bytes: bytes) -> dict:
@@ -120,8 +153,8 @@ class SillarNetModel:
         return await loop.run_in_executor(None, self._predict_sync, image_bytes)
 
 
-_model_instance = SillarNetModel()
+_model_instance = SillarNetDualModel()
 
 
-def get_model() -> SillarNetModel:
+def get_model() -> SillarNetDualModel:
     return _model_instance

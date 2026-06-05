@@ -19,8 +19,8 @@ _PROJECT_ROOT = Path(__file__).parent.parent
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     get_model().load(
-        model_path=_PROJECT_ROOT / settings.model_path,
-        classes_path=_PROJECT_ROOT / settings.classes_path,
+        model_deterioro_path=_PROJECT_ROOT / settings.model_deterioro_path,
+        model_suciedad_path=_PROJECT_ROOT / settings.model_suciedad_path,
     )
     yield
 

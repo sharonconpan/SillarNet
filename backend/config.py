@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int
     refresh_token_expire_days: int
     uploads_dir: str
-    model_path: str
-    classes_path: str
+    model_deterioro_path: str
+    model_suciedad_path: str
     allowed_origins: str
 
     @property

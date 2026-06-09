@@ -71,7 +71,7 @@ alembic current
 cd ..
 ```
 
-Debe mostrar `003 (head)`.
+Debe mostrar algo como: `006 (head)`.
 
 ### 6. Instalar dependencias del frontend
 

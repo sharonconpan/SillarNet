@@ -21,7 +21,7 @@ function assessDim(clase: string | null): Level {
 }
 
 interface ResultData {
-  predicted_class: "ninguno" | "deterioro" | "suciedad";
+  predicted_class: "ninguno" | "deterioro_leve" | "deterioro_grave" | "suciedad_leve" | "suciedad_grave";
   color: string;
   urgency: string;
   deterioro_clase: string | null;

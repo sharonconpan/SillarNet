@@ -13,7 +13,7 @@ export interface Probs {
 
 export interface Analysis {
   id: string;
-  predicted_class: "ninguno" | "deterioro" | "suciedad";
+  predicted_class: "ninguno" | "deterioro_leve" | "deterioro_grave" | "suciedad_leve" | "suciedad_grave";
   confidence: number;
   color: string;
   urgency: string;

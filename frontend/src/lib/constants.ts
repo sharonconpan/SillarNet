@@ -1,19 +1,25 @@
 export const CLASS_LABELS: Record<string, string> = {
-  ninguno:   "Ninguno",
-  deterioro: "Deterioro",
-  suciedad:  "Suciedad",
+  ninguno:         "Ninguno",
+  suciedad_leve:   "Suciedad leve",
+  suciedad_grave:  "Suciedad grave",
+  deterioro_leve:  "Deterioro leve",
+  deterioro_grave: "Deterioro grave",
 };
 
 export const CLASS_COLORS: Record<string, string> = {
-  ninguno:   "#5E8A5C",
-  deterioro: "#B84020",
-  suciedad:  "#C07030",
+  ninguno:         "#5E8A5C",
+  suciedad_leve:   "#C9973A",
+  suciedad_grave:  "#C07030",
+  deterioro_leve:  "#B84020",
+  deterioro_grave: "#7C1D12",
 };
 
 export const CLASS_ICONS: Record<string, string> = {
-  ninguno:   "✅",
-  deterioro: "🔴",
-  suciedad:  "🟠",
+  ninguno:         "✅",
+  suciedad_leve:   "🟠",
+  suciedad_grave:  "🟠",
+  deterioro_leve:  "🔴",
+  deterioro_grave: "🔴",
 };
 
 export const STATUS_LABELS: Record<string, string> = {

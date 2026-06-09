@@ -33,25 +33,26 @@ export default function DashboardPage() {
 
   const filteredMarkers = (markersData?.markers ?? []).filter((m) => {
     if (activeFilter === "all") return true;
-    return m.predicted_class === activeFilter;
+    if (activeFilter === "ninguno") return m.predicted_class === "ninguno";
+    return m.predicted_class.startsWith(activeFilter);
   });
 
   const heatPoints = activeFilter === "all" ? (heatmapData?.points ?? []) : [];
 
   // All stats derived from filteredMarkers
   const filteredTotal  = filteredMarkers.length;
-  const deterioroCount = filteredMarkers.filter((m) => m.predicted_class === "deterioro").length;
-  const suciedadCount  = filteredMarkers.filter((m) => m.predicted_class === "suciedad").length;
+  const deterioroCount = filteredMarkers.filter((m) => m.predicted_class.startsWith("deterioro")).length;
+  const suciedadCount  = filteredMarkers.filter((m) => m.predicted_class.startsWith("suciedad")).length;
   const detPct         = filteredTotal > 0 ? Math.round((deterioroCount / filteredTotal) * 100) : 0;
   const sucPct         = filteredTotal > 0 ? Math.round((suciedadCount  / filteredTotal) * 100) : 0;
 
-  const sucLeveCount  = filteredMarkers.filter((m) => m.suciedad_clase === "leve").length;
-  const sucGraveCount = filteredMarkers.filter((m) => m.suciedad_clase === "grave").length;
+  const sucLeveCount  = filteredMarkers.filter((m) => m.predicted_class === "suciedad_leve").length;
+  const sucGraveCount = filteredMarkers.filter((m) => m.predicted_class === "suciedad_grave").length;
   const sucLevePct    = filteredTotal > 0 ? Math.round((sucLeveCount  / filteredTotal) * 100) : 0;
   const sucGravePct   = filteredTotal > 0 ? Math.round((sucGraveCount / filteredTotal) * 100) : 0;
 
-  const detLeveCount  = filteredMarkers.filter((m) => m.deterioro_clase === "leve").length;
-  const detGraveCount = filteredMarkers.filter((m) => m.deterioro_clase === "grave").length;
+  const detLeveCount  = filteredMarkers.filter((m) => m.predicted_class === "deterioro_leve").length;
+  const detGraveCount = filteredMarkers.filter((m) => m.predicted_class === "deterioro_grave").length;
   const detLevePct    = filteredTotal > 0 ? Math.round((detLeveCount  / filteredTotal) * 100) : 0;
   const detGravePct   = filteredTotal > 0 ? Math.round((detGraveCount / filteredTotal) * 100) : 0;
 
@@ -93,6 +94,24 @@ export default function DashboardPage() {
   }
 
   const statsCards = getStatsCards();
+
+  type SummaryStat = { label: string; color: string };
+  function getSummaryStats(): [SummaryStat, SummaryStat] | null {
+    if (activeFilter === "all") return [
+      { label: `${detPct}% deterioro`,  color: "#B84020" },
+      { label: `${sucPct}% suciedad`,   color: "#C07030" },
+    ];
+    if (activeFilter === "suciedad") return [
+      { label: `${sucLevePct}% leve`,  color: "#C9973A" },
+      { label: `${sucGravePct}% grave`, color: "#C07030" },
+    ];
+    if (activeFilter === "deterioro") return [
+      { label: `${detLevePct}% leve`,  color: "#B84020" },
+      { label: `${detGravePct}% grave`, color: "#7C1D12" },
+    ];
+    return null;
+  }
+  const summaryStats = getSummaryStats();
 
   return (
     <div className={`relative bg-stone-100 ${mapHeight}`}>
@@ -173,16 +192,16 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#B84020" }} />
-                  <span className="text-[11px] text-stone-500 font-medium">{detPct}% deterioro</span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#7C1D12" }} />
-                  <span className="text-[11px] text-stone-500 font-medium">{detGravePct}% crítico</span>
-                </span>
-              </div>
+              {!sheetOpen && summaryStats && (
+                <div className="flex items-center gap-3">
+                  {summaryStats.map((s) => (
+                    <span key={s.label} className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                      <span className="text-[11px] text-stone-500 font-medium">{s.label}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </button>
 

@@ -118,26 +118,23 @@ class SillarNetDualModel:
 
         # — Combined class (deterioro takes priority as structural risk) —
         if clase_det != "ninguno":
-            predicted_class = "deterioro"
-            combined_key    = f"deterioro_{clase_det}"
+            predicted_class = f"deterioro_{clase_det}"
             confidence      = round(float(np.max(pred_det)) * 100, 1)
         elif clase_suc != "ninguno":
-            predicted_class = "suciedad"
-            combined_key    = f"suciedad_{clase_suc}"
+            predicted_class = f"suciedad_{clase_suc}"
             confidence      = round(float(np.max(pred_suc)) * 100, 1)
         else:
             predicted_class = "ninguno"
-            combined_key    = "ninguno"
             confidence      = round(max(float(np.max(pred_det)), float(np.max(pred_suc))) * 100, 1)
 
         return {
             "predicted_class":  predicted_class,
             "confidence":       confidence,
-            "color":            COLORES[combined_key],
-            "urgency":          URGENCIA[combined_key],
-            "recommendation":   RECOMENDACIONES[combined_key],
-            "is_deterioration": predicted_class == "deterioro",
-            "heatmap_weight":   HEATMAP_WEIGHT[combined_key],
+            "color":            COLORES[predicted_class],
+            "urgency":          URGENCIA[predicted_class],
+            "recommendation":   RECOMENDACIONES[predicted_class],
+            "is_deterioration": predicted_class.startswith("deterioro"),
+            "heatmap_weight":   HEATMAP_WEIGHT[predicted_class],
             "deterioro_clase":  clase_det,
             "deterioro_indice": indice_det,
             "suciedad_clase":   clase_suc,

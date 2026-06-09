@@ -9,16 +9,13 @@ from fastapi import Depends
 from database import get_db
 from models.analysis import Analysis, AnalysisStatus
 from schemas.map import HeatmapResponse, HeatPoint, MarkersResponse, MapMarker
+from services.ml_service import HEATMAP_WEIGHT
+
 router = APIRouter(prefix="/map", tags=["map"])
 
 
 def _heatmap_weight(a: Analysis) -> float:
-    if a.predicted_class == "ninguno":
-        return 0.1
-    if a.predicted_class == "deterioro":
-        return 0.75 if a.deterioro_clase == "leve" else 1.0
-    # suciedad
-    return 0.35 if a.suciedad_clase == "leve" else 0.55
+    return HEATMAP_WEIGHT.get(a.predicted_class, 0.1)
 
 # Simple in-memory cache: (data, timestamp)
 _heatmap_cache: dict[str, Any] = {}
@@ -51,7 +48,7 @@ async def get_heatmap(db: AsyncSession = Depends(get_db)):
     ]
 
     deterioration_count = sum(1 for a in analyses if a.is_deterioration)
-    critical_count = sum(1 for a in analyses if a.predicted_class == "deterioro" and a.deterioro_clase == "grave")
+    critical_count = sum(1 for a in analyses if a.predicted_class == "deterioro_grave")
 
     response = HeatmapResponse(
         points=points,

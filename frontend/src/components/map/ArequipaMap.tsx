@@ -133,6 +133,11 @@ export default function ArequipaMap({ heatPoints, markers }: Props) {
                     {CLASS_LABELS[m.predicted_class] ?? m.predicted_class}
                   </span>
                 </div>
+                {m.predicted_class.startsWith("deterioro") && m.suciedad_clase && m.suciedad_clase !== "ninguno" && (
+                  <p style={{ fontSize: 11, color: "#C07030", margin: "3px 0 0" }}>
+                    + {CLASS_LABELS[`suciedad_${m.suciedad_clase}`] ?? `Suciedad ${m.suciedad_clase}`}
+                  </p>
+                )}
                 {m.location_label && (
                   <p style={{ fontSize: 11, color: "#78716c", marginTop: 4, marginBottom: 0 }}>
                     {m.location_label}

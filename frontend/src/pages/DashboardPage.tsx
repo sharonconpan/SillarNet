@@ -33,26 +33,31 @@ export default function DashboardPage() {
 
   const filteredMarkers = (markersData?.markers ?? []).filter((m) => {
     if (activeFilter === "all") return true;
-    if (activeFilter === "ninguno") return m.predicted_class === "ninguno";
-    return m.predicted_class.startsWith(activeFilter);
+    if (activeFilter === "ninguno")
+      return (m.deterioro_clase ?? "ninguno") === "ninguno" && (m.suciedad_clase ?? "ninguno") === "ninguno";
+    if (activeFilter === "suciedad")
+      return m.suciedad_clase != null && m.suciedad_clase !== "ninguno";
+    if (activeFilter === "deterioro")
+      return m.deterioro_clase != null && m.deterioro_clase !== "ninguno";
+    return true;
   });
 
   const heatPoints = activeFilter === "all" ? (heatmapData?.points ?? []) : [];
 
-  // All stats derived from filteredMarkers
+  // All stats derived from filteredMarkers — use dual-model fields directly
   const filteredTotal  = filteredMarkers.length;
-  const deterioroCount = filteredMarkers.filter((m) => m.predicted_class.startsWith("deterioro")).length;
-  const suciedadCount  = filteredMarkers.filter((m) => m.predicted_class.startsWith("suciedad")).length;
+  const deterioroCount = filteredMarkers.filter((m) => m.deterioro_clase != null && m.deterioro_clase !== "ninguno").length;
+  const suciedadCount  = filteredMarkers.filter((m) => m.suciedad_clase != null && m.suciedad_clase !== "ninguno").length;
   const detPct         = filteredTotal > 0 ? Math.round((deterioroCount / filteredTotal) * 100) : 0;
   const sucPct         = filteredTotal > 0 ? Math.round((suciedadCount  / filteredTotal) * 100) : 0;
 
-  const sucLeveCount  = filteredMarkers.filter((m) => m.predicted_class === "suciedad_leve").length;
-  const sucGraveCount = filteredMarkers.filter((m) => m.predicted_class === "suciedad_grave").length;
+  const sucLeveCount  = filteredMarkers.filter((m) => m.suciedad_clase === "leve").length;
+  const sucGraveCount = filteredMarkers.filter((m) => m.suciedad_clase === "grave").length;
   const sucLevePct    = filteredTotal > 0 ? Math.round((sucLeveCount  / filteredTotal) * 100) : 0;
   const sucGravePct   = filteredTotal > 0 ? Math.round((sucGraveCount / filteredTotal) * 100) : 0;
 
-  const detLeveCount  = filteredMarkers.filter((m) => m.predicted_class === "deterioro_leve").length;
-  const detGraveCount = filteredMarkers.filter((m) => m.predicted_class === "deterioro_grave").length;
+  const detLeveCount  = filteredMarkers.filter((m) => m.deterioro_clase === "leve").length;
+  const detGraveCount = filteredMarkers.filter((m) => m.deterioro_clase === "grave").length;
   const detLevePct    = filteredTotal > 0 ? Math.round((detLeveCount  / filteredTotal) * 100) : 0;
   const detGravePct   = filteredTotal > 0 ? Math.round((detGraveCount / filteredTotal) * 100) : 0;
 

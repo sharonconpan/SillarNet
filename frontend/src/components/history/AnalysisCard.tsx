@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { RotateCcw } from "lucide-react";
-import { CLASS_ICONS, CLASS_LABELS, STATUS_LABELS, STATUS_COLORS } from "@/lib/constants";
+import { CLASS_COLORS, CLASS_ICONS, CLASS_LABELS, STATUS_LABELS, STATUS_COLORS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import type { AnalysisSummary } from "@/api/analysis";
 
@@ -9,8 +9,11 @@ interface Props {
 }
 
 export default function AnalysisCard({ analysis: a }: Readonly<Props>) {
-  const icon  = CLASS_ICONS[a.predicted_class] ?? "❓";
   const label = CLASS_LABELS[a.predicted_class] ?? a.predicted_class;
+
+  const hasDeterio = a.deterioro_clase != null && a.deterioro_clase !== "ninguno";
+  const hasSuciedad = a.suciedad_clase != null && a.suciedad_clase !== "ninguno";
+  const isClean = !hasDeterio && !hasSuciedad;
 
   return (
     <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
@@ -18,12 +21,33 @@ export default function AnalysisCard({ analysis: a }: Readonly<Props>) {
       <div className="relative h-36 bg-stone-100">
         <img src={a.stored_image_url} alt={label} className="w-full h-full object-cover" />
 
-        <span
-          className="absolute top-2 left-2 text-[10px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm"
-          style={{ background: a.color }}
-        >
-          {icon} {label}
-        </span>
+        {isClean ? (
+          <span
+            className="absolute top-2 left-2 text-[10px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm"
+            style={{ background: CLASS_COLORS.ninguno }}
+          >
+            {CLASS_ICONS.ninguno} {CLASS_LABELS.ninguno}
+          </span>
+        ) : (
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {hasDeterio && (
+              <span
+                className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm self-start"
+                style={{ background: CLASS_COLORS[`deterioro_${a.deterioro_clase}`] }}
+              >
+                {CLASS_ICONS[`deterioro_${a.deterioro_clase}`]} {CLASS_LABELS[`deterioro_${a.deterioro_clase}`]}
+              </span>
+            )}
+            {hasSuciedad && (
+              <span
+                className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm self-start"
+                style={{ background: CLASS_COLORS[`suciedad_${a.suciedad_clase}`] }}
+              >
+                {CLASS_ICONS[`suciedad_${a.suciedad_clase}`]} {CLASS_LABELS[`suciedad_${a.suciedad_clase}`]}
+              </span>
+            )}
+          </div>
+        )}
 
         {a.re_analyze_suggested && (
           <span className="absolute top-2 right-2 bg-amber-400 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
